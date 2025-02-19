@@ -1,13 +1,19 @@
-{% extends 'store/base.html' %}
+{% extends 'base.html' %}
+{% block title %}Order History - Jewelry Sales Manager{% endblock %}
 {% block content %}
-<h1>Lịch sử đơn hàng</h1>
-{% if orders %}
-    <ul>
-    {% for order in orders %}
-        <li>Order ID: {{ order.id }} - Ngày: {{ order.created_at }}</li>
-    {% endfor %}
+<div class="container my-5">
+    <h2 class="mb-4">Your Order History</h2>
+    {% if orders %}
+    <ul class="list-group shadow-sm">
+        {% for order in orders %}
+        <li class="list-group-item">
+            <strong>Order #{{ order.pk }}</strong> - Date: {{ order.date }} - Total: ${{ order.total_amount|floatformat:2 }} - Status: {{ order.order_status }}
+        </li>
+        {% endfor %}
     </ul>
-{% else %}
-    <p>Bạn chưa có đơn hàng nào.</p>
-{% endif %}
+    {% else %}
+    <p>You have no orders.</p>
+    {% endif %}
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+</div>
 {% endblock %}

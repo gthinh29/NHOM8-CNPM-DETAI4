@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Sales - Jewelry Sales Manager{% endblock %}
+{% block content %}
+<div class="container my-5">
+  <h1 class="mb-4">Sales Management</h1>
+  <!-- Summary Cards for Sales -->
+  <div class="row">
+    <!-- Today's Sales -->
+    <div class="col-md-3 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h5 class="card-title">Today's Sales</h5>
+          <p class="card-text display-6">$3,200</p>
+        </div>
+      </div>
+    </div>
+    <!-- Weekly Sales -->
+    <div class="col-md-3 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h5 class="card-title">Weekly Sales</h5>
+          <p class="card-text display-6">$22,400</p>
+        </div>
+      </div>
+    </div>
+    <!-- Monthly Sales -->
+    <div class="col-md-3 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h5 class="card-title">Monthly Sales</h5>
+          <p class="card-text display-6">$95,000</p>
+        </div>
+      </div>
+    </div>
+    <!-- Yearly Sales -->
+    <div class="col-md-3 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h5 class="card-title">Yearly Sales</h5>
+          <p class="card-text display-6">$1,200,000</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales Trend Chart -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Sales Trend</h5>
+      <canvas id="salesChart" width="400" height="150"></canvas>
+    </div>
+  </div>
+
+  <!-- Sales Details Table -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">Order Details</h5>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead class="table-light">
+            <tr>
+              <th>Order ID</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr>
+              <td>{{ order.pk }}</td>
+              <td>{{ order.date }}</td>
+              <td>{% if order.created_by %}{{ order.created_by.username }}{% else %}N/A{% endif %}</td>
+              <td>${{ order.total_amount|floatformat:2 }}</td>
+              <td>{{ order.order_status|default:"Not set" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center">No sales data available.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  var ctx = document.getElementById('salesChart').getContext('2d');
+  var salesChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{
+              label: 'Sales ($)',
+              data: [3200, 2800, 3500, 3000, 4000, 4500, 3800],
+              backgroundColor: 'rgba(52, 152, 219, 0.2)',
+              borderColor: 'rgba(52, 152, 219, 1)',
+              borderWidth: 2,
+              fill: true,
+          }]
+      },
+      options: {
+          responsive: true,
+          scales: {
+              y: { beginAtZero: true }
+          }
+      }
+  });
+</script>
+{% endblock %}

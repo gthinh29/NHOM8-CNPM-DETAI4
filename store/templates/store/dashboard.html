@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Jewelry Sales Manager{% endblock %}
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Sidebar: hiển thị menu tùy theo vai trò -->
+        <div class="col-md-3">
+            <div class="list-group shadow-sm">
+                {% if user.role == 'admin' %}
+                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    <a href="{% url 'manage_users' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-people"></i> Manage Users
+                    </a>
+                    <a href="{% url 'reports' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-file-earmark-text"></i> Reports
+                    </a>
+                    <a href="{% url 'settings' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-gear"></i> Settings
+                    </a>
+                {% elif user.role == 'accountant' %}
+                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    <a href="{% url 'orders' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-bag-check"></i> Orders
+                    </a>
+                    <a href="{% url 'reports' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-file-earmark-text"></i> Reports
+                    </a>
+                {% elif user.role == 'store_manager' %}
+                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    <a href="{% url 'inventory' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-box-seam"></i> Inventory
+                    </a>
+                    <a href="{% url 'orders' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-bag-check"></i> Orders
+                    </a>
+                    <a href="{% url 'customers' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-person-lines-fill"></i> Customers
+                    </a>
+                {% elif user.role == 'sales_staff' %}
+                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    <a href="{% url 'sales' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-currency-dollar"></i> Sales
+                    </a>
+                    <a href="{% url 'orders' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-bag-check"></i> Orders
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <h1 class="mb-4">Dashboard</h1>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Sales</h5>
+                            <p class="card-text display-6">${{ total_sales|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Orders</h5>
+                            <p class="card-text display-6">{{ orders_count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Products Available</h5>
+                            <p class="card-text display-6">{{ products_count }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

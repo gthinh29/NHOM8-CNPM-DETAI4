@@ -1,28 +1,34 @@
-{% extends 'store/base.html' %}
+{% extends 'base.html' %}
+{% block title %}Cart - Jewelry Sales Manager{% endblock %}
 {% block content %}
-<h2>Your Cart</h2>
-{% if cart_items %}
-<table class="table">
-    <thead>
-        <tr>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Subtotal</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in cart_items %}
-        <tr>
-            <td>{{ item.product.name }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>${{ item.subtotal }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-<p>Total: ${{ total }}</p>
-<a href="{% url 'checkout' %}" class="btn btn-success">Checkout</a>
-{% else %}
-<p>Your cart is empty.</p>
-{% endif %}
+<div class="container my-5">
+    <h2 class="mb-4">Your Cart</h2>
+    {% if items %}
+    <table class="table table-bordered shadow-sm">
+        <thead class="table-light">
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.product.price }}</td>
+                <td>${{ item.subtotal|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h4>Total: ${{ total|floatformat:2 }}</h4>
+    <a href="{% url 'checkout' %}" class="btn btn-success">Checkout</a>
+    {% else %}
+    <p>Your cart is empty.</p>
+    {% endif %}
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+</div>
 {% endblock %}

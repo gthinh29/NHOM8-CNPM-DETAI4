@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Customers - Jewelry Sales Manager{% endblock %}
+{% block content %}
+<div class="container my-5">
+  <h1 class="mb-4">Customer Management</h1>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">Customer List</h5>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead class="table-light">
+            <tr>
+              <th>User ID</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in customers %}
+            <tr>
+              <td>{{ user.pk }}</td>
+              <td>{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.phone }}</td>
+              <td>{{ user.get_role_display }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center">No customers found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,6 +1,14 @@
-{% extends 'store/base.html' %}
+{% extends 'base.html' %}
+{% block title %}Order Confirmation - Jewelry Sales Manager{% endblock %}
 {% block content %}
-<h2>Order Confirmation</h2>
-<p>Thank you for your order! Your order id is {{ order.id }}.</p>
-<a href="{% url 'home' %}" class="btn btn-primary">Back to Home</a>
+<div class="container my-5">
+    <div class="card mx-auto shadow-sm" style="max-width: 600px;">
+        <div class="card-body text-center">
+            <h2>Order Confirmed</h2>
+            <p>Date: {{ order.date }}</p>
+            <p>Total Amount: ${{ order.total_amount|floatformat:2 }}</p>
+            <a href="{% url 'dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -4,3 +4,6 @@ django-bootstrap4
 mssql-django
 Pillow
 pytz
+django-crispy-forms
+django-widget-tweaks
+

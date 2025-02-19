@@ -10,7 +10,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      - DATABASE_URL=mssql://sa:YourStrongP@ssw0rd!@db:1433/sales_db
+      - DATABASE_URL=mssql://sa:YourStrongP@ssw0rd!@db:1433/jssms_db
 
   db:
     build:
