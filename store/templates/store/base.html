@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Jewelry Store</title>
+    <!-- Bootstrap CSS từ CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <!-- Thêm một số CSS tùy chỉnh nếu cần -->
+    <style>
+      body {
+        padding-top: 70px;
+      }
+    </style>
+</head>
+<body>
+<!-- Navbar sử dụng Bootstrap -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'home' %}">Jewelry Store</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent" 
+            aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'cart' %}">Cart</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'order_history' %}">Orders</a></li>
+      </ul>
+      <!-- Form tìm kiếm -->
+      <form class="form-inline my-2 my-lg-0" method="get" action="{% url 'product_search' %}">
+        <input class="form-control mr-sm-2" type="search" placeholder="Tìm sản phẩm" name="q">
+        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Tìm</button>
+      </form>
+      <ul class="navbar-nav ml-2">
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'profile' %}">
+              <i class="fas fa-user"></i> {{ user.username }}
+            </a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Hiển thị thông báo (nếu có) -->
+{% if messages %}
+<div class="container mt-2">
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="container mt-4">
+    {% block content %}{% endblock %}
+</div>
+
+<!-- Bootstrap JS và các thư viện liên quan từ CDN -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<!-- Thêm Font Awesome để có icon (tuỳ chọn) -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>

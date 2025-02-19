@@ -1,0 +1,19 @@
+FROM mcr.microsoft.com/mssql/server:2019-latest
+
+# Chạy với quyền root để cài đặt các gói cần thiết
+USER root
+
+# Cài đặt các công cụ cần thiết và mssql-tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg2 \
+    apt-transport-https \
+    netcat && \
+    curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list && \
+    apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17 mssql-tools && \
+    ln -s /opt/mssql-tools/bin/sqlcmd /usr/bin/sqlcmd && \
+    ln -s /opt/mssql-tools/bin/bcp /usr/bin/bcp
+
+# Chuyển lại quyền về user mssql
+USER mssql
