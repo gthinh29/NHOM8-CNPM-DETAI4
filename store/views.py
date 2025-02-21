@@ -1,108 +1,44 @@
+from django.utils import timezone
+from datetime import timedelta
+from django.contrib.auth import logout
+from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum
-from .models import Product, Order, OrderItem, Counter, Debts
-from .forms import CustomUserCreationForm, CustomUserChangeForm
+from django.db.models import Sum, F
+from django.db import transaction
+from .models import CustomUser, Product, Order, OrderItem, StoreCounter, Debts, SystemSetting, Role
+from .forms import (
+    CustomUserCreationForm,
+    CustomUserChangeForm,
+    CounterForm,
+    SystemSettingForm,
+    ProductForm
+)
 
-# Dashboard view: hiển thị số liệu thống kê
+# 🚀 Dashboard
 @login_required
 def dashboard(request):
-    total_sales = Order.objects.aggregate(total=Sum('total_amount'))['total'] or 0
-    orders_count = Order.objects.count()
-    products_count = Product.objects.count()
     context = {
-        'total_sales': total_sales,
-        'orders_count': orders_count,
-        'products_count': products_count,
+        'total_sales': Order.objects.aggregate(total=Sum('total_amount'))['total'] or 0,
+        'orders_count': Order.objects.count(),
+        'products_count': Product.objects.count(),
+        'counters_count': StoreCounter.objects.count(),
     }
     return render(request, 'store/dashboard.html', context)
 
-# Placeholder view cho Sales Management
-@login_required
-def sales(request):
-    # Bạn có thể tích hợp logic doanh số bán hàng tại đây
-    return render(request, 'store/sales.html')
-
-# Placeholder view cho Inventory Management
-@login_required
-def inventory(request):
-    return render(request, 'store/inventory.html')
-
-# View Orders: hiển thị danh sách đơn hàng
+# 🛒 Orders
 @login_required
 def orders(request):
-    orders_qs = Order.objects.filter(created_by=request.user).order_by('-date')
-    total_sales = orders_qs.aggregate(total=Sum('total_amount'))['total'] or 0
+    orders_qs = Order.objects.all() if request.user.role in [Role.STORE_MANAGER, Role.ACCOUNTANT] else Order.objects.filter(created_by=request.user)
     context = {
         'orders': orders_qs,
-        'total_sales': total_sales,
+        'total_sales': orders_qs.aggregate(total=Sum('total_amount'))['total'] or 0,
     }
     return render(request, 'store/orders.html', context)
 
-# Placeholder view cho Customers Management
-@login_required
-def customers(request):
-    return render(request, 'store/customers.html')
-
-# Placeholder view cho Reports
-@login_required
-def reports(request):
-    return render(request, 'store/reports.html')
-
-# Placeholder view cho Settings
-@login_required
-def settings(request):
-    return render(request, 'store/settings.html')
-
-# Home view: danh sách sản phẩm (có thể dùng làm trang hiển thị bên ngoài dashboard)
-def home(request):
-    products = Product.objects.all()
-    return render(request, 'store/home.html', {'products': products})
-
-# Chi tiết sản phẩm
-def product_detail(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-    return render(request, 'store/product_detail.html', {'product': product})
-
-# View đăng ký
-def register(request):
-    if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, "Đăng ký thành công. Chào mừng bạn!")
-            return redirect('dashboard')
-        else:
-            messages.error(request, "Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin đăng ký.")
-    else:
-        form = CustomUserCreationForm()
-    return render(request, 'store/register.html', {'form': form})
-
-# View đăng nhập
-def user_login(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            messages.success(request, f"Chào mừng {user.username}!")
-            return redirect('dashboard')
-        else:
-            messages.error(request, "Thông tin đăng nhập không chính xác.")
-            return render(request, 'store/login.html')
-    return render(request, 'store/login.html')
-
-# View đăng xuất
-def user_logout(request):
-    logout(request)
-    messages.info(request, "Bạn đã đăng xuất.")
-    return redirect('dashboard')
-
-# View giỏ hàng
+# 🛍️ Cart
 @login_required
 def cart(request):
     cart_data = request.session.get('cart', {})
@@ -115,96 +51,323 @@ def cart(request):
         total += subtotal
     return render(request, 'store/cart.html', {'items': items, 'total': total})
 
-# View thêm sản phẩm vào giỏ hàng
+# ➕ Add to Cart
 @login_required
 def add_to_cart(request, product_id):
-    if request.method != 'POST':
-        messages.info(request, "Sản phẩm đã được thêm vào giỏ hàng.")
+    product = get_object_or_404(Product, id=product_id)
     cart_data = request.session.get('cart', {})
-    cart_data[str(product_id)] = cart_data.get(str(product_id), 0) + 1
-    request.session['cart'] = cart_data
-    messages.success(request, "Sản phẩm đã được thêm vào giỏ hàng.")
+
+    if product.stock > 0:
+        cart_data[str(product_id)] = cart_data.get(str(product_id), 0) + 1
+        request.session['cart'] = cart_data
+        messages.success(request, "Added to cart.")
+    else:
+        messages.error(request, "Out of stock.")
+
     return redirect('cart')
 
-# View thanh toán (checkout)
+# 💳 Checkout
 @login_required
+@transaction.atomic
 def checkout(request):
     cart_data = request.session.get('cart', {})
+
     if not cart_data:
-        messages.warning(request, "Giỏ hàng của bạn trống.")
+        messages.warning(request, "Cart is empty.")
         return redirect('dashboard')
+
     total = 0
     for product_id, quantity in cart_data.items():
         product = get_object_or_404(Product, id=product_id)
+        if product.stock < quantity:
+            messages.error(request, f"Insufficient stock for {product.name}")
+            return redirect('cart')
         total += product.price * quantity
-    try:
+
+    with transaction.atomic():
         order = Order.objects.create(created_by=request.user, total_amount=total)
         for product_id, quantity in cart_data.items():
             product = get_object_or_404(Product, id=product_id)
+            product.stock -= quantity
+            product.save()
             OrderItem.objects.create(order=order, product=product, quantity=quantity)
-        request.session['cart'] = {}
-        messages.success(request, "Đơn hàng của bạn đã được đặt thành công.")
-    except Exception as e:
-        messages.error(request, "Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại sau.")
-        return redirect('cart')
+
+    request.session['cart'] = {}
+    messages.success(request, "Order placed successfully.")
     return render(request, 'store/order_confirmation.html', {'order': order})
 
-# View lịch sử đơn hàng
-@login_required
-def order_history(request):
-    orders_qs = Order.objects.filter(created_by=request.user).order_by('-date')
-    context = {
-        'orders': orders_qs,
-    }
-    return render(request, 'store/order_history.html', context)
+# 👤 Register
+def register(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Registration successful!")
+            return redirect('dashboard')
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'store/register.html', {'form': form})
 
-# View hồ sơ cá nhân (profile)
+# 🔐 Login
+def user_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            messages.success(request, f"Welcome {user.username}!")
+            return redirect('dashboard')
+        else:
+            messages.error(request, "Invalid credentials.")
+    return render(request, 'store/login.html')
+
+# 🏪 Store Counter Management
+@login_required
+def manage_counters(request):
+    if request.user.role != Role.STORE_MANAGER:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    counters = StoreCounter.objects.filter(manager=request.user)
+    return render(request, 'store/counters/manage_counters.html', {'counters': counters})
+
+# 📊 Revenue Reports
+@login_required
+def revenue_report(request):
+    if request.user.role not in [Role.ADMIN, Role.ACCOUNTANT]:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    total_revenue = Order.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+    return render(request, 'store/revenue_report.html', {'total_revenue': total_revenue})
+
+# 📦 Product Management
+@login_required
+def product_list(request):
+    products = Product.objects.all()
+    return render(request, 'store/products/product_list.html', {'products': products})
+
+@login_required
+def add_product(request):
+    if request.user.role not in [Role.ADMIN, Role.ACCOUNTANT]:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Product added.")
+            return redirect('product_list')
+    else:
+        form = ProductForm()
+    return render(request, 'store/products/add_product.html', {'form': form})
+
+@login_required
+def update_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    if request.method == 'POST':
+        form = ProductForm(request.POST, instance=product)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Product updated.")
+            return redirect('product_list')
+    else:
+        form = ProductForm(instance=product)
+    return render(request, 'store/products/update_product.html', {'form': form, 'product': product})
+
+# ⚙️ Settings
+@login_required
+def settings(request):
+    if request.user.role != Role.ADMIN:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    setting, created = SystemSetting.objects.get_or_create(id=1)
+    if request.method == 'POST':
+        form = SystemSettingForm(request.POST, instance=setting)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Settings updated.")
+            return redirect('settings')
+    else:
+        form = SystemSettingForm(instance=setting)
+    return render(request, 'store/settings.html', {'form': form})
+
+@login_required
+def counter_list(request):
+    counters = StoreCounter.objects.all()
+    return render(request, 'store/counters/counter_list.html', {'counters': counters})
+@login_required
+def counter_detail(request, counter_id):
+    counter = get_object_or_404(StoreCounter, id=counter_id)
+    return render(request, 'store/counters/counter_detail.html', {'counter': counter})
+@login_required
+def counter_create(request):
+    if request.user.role != Role.STORE_MANAGER:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = CounterForm(request.POST)
+        if form.is_valid():
+            # Tự động gán manager là người dùng hiện tại
+            counter = form.save(commit=False)
+            counter.manager = request.user
+            counter.save()
+            form.save_m2m()  # Lưu many-to-many fields (products)
+            
+            messages.success(request, "Counter created successfully.")
+            return redirect('manage_counters')
+    else:
+        form = CounterForm()
+    
+    return render(request, 'store/counters/counter_create.html', {'form': form})
+# 🛑 Logout
+def user_logout(request):
+    logout(request)
+    messages.success(request, "You have been logged out.")
+    return redirect('login')
+
+# 📝 Order Detail
+@login_required
+def order_detail(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    
+    # Kiểm tra quyền truy cập
+    if request.user.role not in [Role.ADMIN, Role.ACCOUNTANT] and order.created_by != request.user:
+        return HttpResponseForbidden("You don't have permission to view this order.")
+    
+    return render(request, 'store/orders/order_detail.html', {'order': order})
+
+# 🔄 Counter Update
+@login_required
+def counter_update(request, counter_id):
+    if request.user.role != Role.STORE_MANAGER:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+    
+    counter = get_object_or_404(StoreCounter, id=counter_id)
+    
+    if request.method == 'POST':
+        form = CounterForm(request.POST, instance=counter)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Counter updated successfully.")
+            return redirect('manage_counters')
+    else:
+        form = CounterForm(instance=counter)
+    
+    return render(request, 'store/counters/counter_update.html', {'form': form, 'counter': counter})
+
+# ❌ Counter Delete
+@login_required
+def counter_delete(request, counter_id):
+    if request.user.role != Role.STORE_MANAGER:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+    
+    counter = get_object_or_404(StoreCounter, id=counter_id)
+    
+    if request.method == 'POST':
+        counter.delete()
+        messages.success(request, "Counter deleted successfully.")
+        return redirect('manage_counters')
+    
+    return render(request, 'store/counters/counter_confirm_delete.html', {'counter': counter})
+
+# 👥 Manage Users
+@login_required
+def manage_users(request):
+    if request.user.role != Role.ADMIN:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+    
+    users = CustomUser.objects.all()
+    return render(request, 'store/users/manage_users.html', {'users': users})
+
+# 📈 Sales Dashboard
+@login_required
+def sales(request):
+    # Lấy ngày hiện tại
+    today = timezone.now().date()
+
+    # Tính toán doanh thu
+    today_sales = Order.objects.filter(date=today).aggregate(total=Sum('total_amount'))['total'] or 0
+    weekly_sales = Order.objects.filter(date__gte=today - timedelta(days=7)).aggregate(total=Sum('total_amount'))['total'] or 0
+    monthly_sales = Order.objects.filter(date__month=today.month, date__year=today.year).aggregate(total=Sum('total_amount'))['total'] or 0
+    yearly_sales = Order.objects.filter(date__year=today.year).aggregate(total=Sum('total_amount'))['total'] or 0
+
+    # Lấy danh sách đơn hàng gần nhất
+    recent_orders = Order.objects.order_by('-date')[:10]
+
+    # Dữ liệu biểu đồ (7 ngày gần nhất)
+    chart_labels = []
+    chart_data = []
+    for i in range(6, -1, -1):
+        date = today - timedelta(days=i)
+        chart_labels.append(date.strftime("%a"))  # Tên ngày (Mon, Tue, ...)
+        total = Order.objects.filter(date=date).aggregate(total=Sum('total_amount'))['total'] or 0
+        chart_data.append(total)
+
+    context = {
+        'today_sales': today_sales,
+        'weekly_sales': weekly_sales,
+        'monthly_sales': monthly_sales,
+        'yearly_sales': yearly_sales,
+        'orders': recent_orders,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
+    }
+    return render(request, 'store/sales.html', context)
+
+# 📦 Inventory Management
+@login_required
+def inventory(request):
+    products = Product.objects.annotate(
+        total_value=F('price') * F('stock')
+    )
+    return render(request, 'store/inventory/inventory.html', {'products': products})
+
+# 👤 Customer Management
+@login_required
+def customers(request):
+    customers = CustomUser.objects.filter(role=Role.SALES_STAFF)
+    return render(request, 'store/customers/customers.html', {'customers': customers})
+
+# 📄 Reports
+@login_required
+def reports(request):
+    if request.user.role not in [Role.ADMIN, Role.ACCOUNTANT]:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
+    
+    return render(request, 'store/reports/reports.html')
+
+# 👤 User Profile
 @login_required
 def profile(request):
     if request.method == 'POST':
         form = CustomUserChangeForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, "Thông tin cá nhân đã được cập nhật.")
+            messages.success(request, "Profile updated successfully.")
             return redirect('profile')
-        else:
-            messages.error(request, "Có lỗi khi cập nhật thông tin. Vui lòng kiểm tra lại.")
     else:
         form = CustomUserChangeForm(instance=request.user)
+    
     return render(request, 'store/profile.html', {'form': form})
 
-# View quản lý người dùng (cho Admin)
+# 🛍️ Product Detail
 @login_required
-def manage_users(request):
-    # Chỉ cho phép Admin truy cập
-    if request.user.role != 'admin':
-        messages.error(request, "Bạn không có quyền truy cập trang này.")
-        return redirect('dashboard')
-    users = get_user_model().objects.all()
-    return render(request, 'store/manage_users.html', {'users': users})
-from django.contrib.auth import get_user_model
-from .models import SystemSetting
-from .forms import SystemSettingForm
+def product_detail(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    return render(request, 'store/products/product_detail.html', {'product': product})
 
+# 📜 Order History
 @login_required
-def settings(request):
-    # Chỉ cho phép Admin truy cập trang cài đặt
-    if request.user.role != 'admin':
-        messages.error(request, "Bạn không có quyền truy cập trang này.")
-        return redirect('dashboard')
-    
-    # Lấy hoặc tạo một instance của SystemSetting (giả sử chỉ có một instance duy nhất)
-    setting, created = SystemSetting.objects.get_or_create(id=1)
-    
-    if request.method == 'POST':
-        form = SystemSettingForm(request.POST, instance=setting)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "System settings updated successfully.")
-            return redirect('settings')
-        else:
-            messages.error(request, "Please correct the errors below.")
-    else:
-        form = SystemSettingForm(instance=setting)
-    
-    return render(request, 'store/settings.html', {'form': form})
+def order_history(request):
+    orders = Order.objects.filter(created_by=request.user).order_by('-date')
+    return render(request, 'store/orders/order_history.html', {'orders': orders})

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Manage Counters - Jewelry Sales Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Manage Counters</h2>
+    
+    <div class="mb-3">
+        <a href="{% url 'counter_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create New Counter
+        </a>
+    </div>
+
+    <div class="row">
+        {% for counter in counters %}
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ counter.location }}</h5>
+                    <p class="card-text">
+                        Manager: {{ counter.manager.get_full_name|default:counter.manager.username }}<br>
+                        Staff: {{ counter.assigned_employee.username|default:"Not assigned" }}
+                    </p>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'counter_detail' counter.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> Details
+                        </a>
+                        <a href="{% url 'counter_update' counter.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">No counters found.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

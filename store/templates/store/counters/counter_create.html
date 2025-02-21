@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Create New Counter - Jewelry Sales Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Create New Counter</h2>
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Ẩn trường manager và tự động gán giá trị -->
+                <input type="hidden" name="manager" value="{{ request.user.id }}">
+
+                <div class="mb-3">
+                    <label for="id_location" class="form-label">Location</label>
+                    {{ form.location }}
+                    <div class="form-text">Enter counter location (e.g., Floor 1, Section A)</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_assigned_employee" class="form-label">Assigned Staff</label>
+                    {{ form.assigned_employee }}
+                    <div class="form-text">Select a staff member to assign to this counter.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_products" class="form-label">Assigned Products</label>
+                    {{ form.products }}
+                    <div class="form-text">Select products available at this counter.</div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'manage_counters' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Counters
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create Counter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Thêm Bootstrap Icons nếu chưa có -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+    .form-control:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .card {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .form-text {
+        font-size: 0.875em;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}

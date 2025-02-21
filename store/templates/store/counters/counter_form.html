@@ -1,0 +1,15 @@
+from django import forms
+from .models import StoreCounter
+
+class CounterForm(forms.ModelForm):
+    class Meta:
+        model = StoreCounter
+        fields = ['location', 'assigned_employee', 'products']
+        widgets = {
+            'products': forms.CheckboxSelectMultiple(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Giới hạn lựa chọn assigned_employee chỉ cho SALES_STAFF
+        self.fields['assigned_employee'].queryset = CustomUser.objects.filter(role=Role.SALES_STAFF)

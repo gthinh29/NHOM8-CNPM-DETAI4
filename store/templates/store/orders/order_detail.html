@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Chi tiết Đơn hàng #{{ order.id }} - Jewelry Sales Manager{% endblock %}
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4 text-center">Chi tiết Đơn hàng #{{ order.id }}</h1>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Thông tin Đơn hàng</h5>
+            <p><strong>Ngày tạo:</strong> {{ order.date }}</p>
+            <p><strong>Tổng tiền:</strong> {{ order.total_amount|floatformat:2 }} VNĐ</p>
+            <p><strong>Người tạo:</strong> {{ order.created_by }}</p>
+            <h6 class="mt-4">Danh sách Sản phẩm</h6>
+            <ul class="list-group">
+                {% for item in order.order_items.all %}
+                <li class="list-group-item">
+                    <strong>{{ item.product.name }}</strong> - Số lượng: {{ item.quantity }} - Giá: {{ item.product.price|floatformat:2 }} VNĐ
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="mt-4">
+                <a href="{% url 'counter_detail' order.counter.id %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

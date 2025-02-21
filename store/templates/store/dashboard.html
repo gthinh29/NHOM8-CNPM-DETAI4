@@ -42,7 +42,11 @@
                     <a href="{% url 'customers' %}" class="list-group-item list-group-item-action">
                         <i class="bi bi-person-lines-fill"></i> Customers
                     </a>
-                {% elif user.role == 'sales_staff' %}
+                </a>
+                <a href="{% url 'counter_list' %}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-shop"></i> Counters
+                </a>
+                    {% elif user.role == 'sales_staff' %}
                     <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
@@ -52,9 +56,14 @@
                     <a href="{% url 'orders' %}" class="list-group-item list-group-item-action">
                         <i class="bi bi-bag-check"></i> Orders
                     </a>
+                    <a href="{% url 'counter_list' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-shop"></i> Counters
+                    </a>
                 {% endif %}
             </div>
         </div>
+        <!-- Main Content -->
+        <div class="col-md-9
         <!-- Main Content -->
         <div class="col-md-9">
             <h1 class="mb-4">Dashboard</h1>

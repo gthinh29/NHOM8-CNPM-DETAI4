@@ -1,8 +1,16 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Sales - Jewelry Sales Manager{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'store/css/styles.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container my-5">
   <h1 class="mb-4">Sales Management</h1>
+
   <!-- Summary Cards for Sales -->
   <div class="row">
     <!-- Today's Sales -->
@@ -10,7 +18,7 @@
       <div class="card shadow-sm">
         <div class="card-body text-center">
           <h5 class="card-title">Today's Sales</h5>
-          <p class="card-text display-6">$3,200</p>
+          <p class="card-text display-6">${{ today_sales|floatformat:2 }}</p>
         </div>
       </div>
     </div>
@@ -19,7 +27,7 @@
       <div class="card shadow-sm">
         <div class="card-body text-center">
           <h5 class="card-title">Weekly Sales</h5>
-          <p class="card-text display-6">$22,400</p>
+          <p class="card-text display-6">${{ weekly_sales|floatformat:2 }}</p>
         </div>
       </div>
     </div>
@@ -28,7 +36,7 @@
       <div class="card shadow-sm">
         <div class="card-body text-center">
           <h5 class="card-title">Monthly Sales</h5>
-          <p class="card-text display-6">$95,000</p>
+          <p class="card-text display-6">${{ monthly_sales|floatformat:2 }}</p>
         </div>
       </div>
     </div>
@@ -37,7 +45,7 @@
       <div class="card shadow-sm">
         <div class="card-body text-center">
           <h5 class="card-title">Yearly Sales</h5>
-          <p class="card-text display-6">$1,200,000</p>
+          <p class="card-text display-6">${{ yearly_sales|floatformat:2 }}</p>
         </div>
       </div>
     </div>
@@ -46,7 +54,7 @@
   <!-- Sales Trend Chart -->
   <div class="card shadow-sm mb-4">
     <div class="card-body">
-      <h5 class="card-title">Sales Trend</h5>
+      <h5 class="card-title">Sales Trend (Last 7 Days)</h5>
       <canvas id="salesChart" width="400" height="150"></canvas>
     </div>
   </div>
@@ -54,7 +62,7 @@
   <!-- Sales Details Table -->
   <div class="card shadow-sm">
     <div class="card-body">
-      <h5 class="card-title">Order Details</h5>
+      <h5 class="card-title">Recent Orders</h5>
       <div class="table-responsive">
         <table class="table table-striped">
           <thead class="table-light">
@@ -70,14 +78,22 @@
             {% for order in orders %}
             <tr>
               <td>{{ order.pk }}</td>
-              <td>{{ order.date }}</td>
+              <td>{{ order.date|date:"Y-m-d" }}</td>
               <td>{% if order.created_by %}{{ order.created_by.username }}{% else %}N/A{% endif %}</td>
               <td>${{ order.total_amount|floatformat:2 }}</td>
-              <td>{{ order.order_status|default:"Not set" }}</td>
+              <td>
+                <span class="badge 
+                  {% if order.order_status == 'paid' %}bg-success
+                  {% elif order.order_status == 'pending' %}bg-warning
+                  {% elif order.order_status == 'canceled' %}bg-danger
+                  {% else %}bg-secondary{% endif %}">
+                  {{ order.get_order_status_display }}
+                </span>
+              </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="5" class="text-center">No sales data available.</td>
+              <td colspan="5" class="text-center">No orders found.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -96,10 +112,10 @@
   var salesChart = new Chart(ctx, {
       type: 'line',
       data: {
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          labels: {{ chart_labels|safe }},  // Truyền dữ liệu từ view
           datasets: [{
               label: 'Sales ($)',
-              data: [3200, 2800, 3500, 3000, 4000, 4500, 3800],
+              data: {{ chart_data|safe }},  // Truyền dữ liệu từ view
               backgroundColor: 'rgba(52, 152, 219, 0.2)',
               borderColor: 'rgba(52, 152, 219, 1)',
               borderWidth: 2,

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Xóa Quầy hàng</h2>
+<p>Bạn có chắc chắn muốn xóa quầy <strong>{{ counter.location }}</strong> không?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Xóa</button>
+    <a href="{% url 'counter_list' %}" class="btn btn-secondary">Hủy</a>
+</form>
+{% endblock %}

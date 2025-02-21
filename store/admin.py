@@ -1,6 +1,7 @@
+# store/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Product, Order, OrderItem, Counter, Debts
+from .models import CustomUser, Product, Order, OrderItem, StoreCounter, Debts  # Đổi Counter thành StoreCounter
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -25,5 +26,5 @@ admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Product)
 admin.site.register(Order)
 admin.site.register(OrderItem)
-admin.site.register(Counter)
+admin.site.register(StoreCounter)  # Đổi Counter thành StoreCounter
 admin.site.register(Debts)
