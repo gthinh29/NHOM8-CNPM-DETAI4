@@ -28,7 +28,10 @@ SECRET_KEY = 'django-insecure-_7za=nf0yjjb(ehvh8!abg9do)3m0p60jwgbwsx+d2)=#=mz@i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '192.168.100.101',]
 
 
 # Application definition
@@ -135,12 +138,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'store/static'),
+]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = '/login/'
-
+LOGIN_URL = 'store:login'
+LOGIN_REDIRECT_URL = 'store:dashboard'
+LOGOUT_REDIRECT_URL = 'store:login'

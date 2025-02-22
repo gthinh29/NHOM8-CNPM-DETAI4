@@ -1,18 +1,17 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth import get_user_model
-from .models import CustomUser, SystemSetting, StoreCounter, Product  # Thêm Product vào import
-from .models import Role
+from .models import CustomUser, SystemSetting, StoreCounter, Product, Role, Order, OrderItem
 
 # Form tạo người dùng mới
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
-        model = get_user_model()
+        model = CustomUser
         fields = ('username', 'email', 'phone', 'role')
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._apply_form_controls()
+        self.fields['role'].widget = forms.Select(choices=CustomUser.Role.choices)
 
 # Form chỉnh sửa người dùng
 class CustomUserChangeForm(UserChangeForm):
@@ -90,7 +89,7 @@ class CounterForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = '__all__'  # Hoặc chỉ định các field cụ thể nếu cần
+        fields = ['name', 'price', 'stock', 'description']  # Hoặc chỉ định các field cụ thể nếu cần
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -110,4 +109,26 @@ class ProductForm(forms.ModelForm):
                 'placeholder': 'Enter description',
                 'rows': 3
             }),
+        }
+
+class OrderForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['customer_name', 'customer_phone', 'customer_address']
+        widgets = {
+            'customer_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter customer name'}),
+            'customer_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'}),
+            'customer_address': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter address', 'rows': 2}),
+        }
+
+class OrderItemForm(forms.ModelForm):
+    class Meta:
+        model = OrderItem
+        fields = ['product', 'quantity']
+        widgets = {
+            'product': forms.Select(attrs={
+                'class': 'form-control select2',
+                'data-placeholder': 'Select or enter product code'
+            }),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
         }

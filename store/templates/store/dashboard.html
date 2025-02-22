@@ -1,95 +1,72 @@
-{% extends 'base.html' %}
-{% block title %}Dashboard - Jewelry Sales Manager{% endblock %}
+
+{% extends "store/base.html" %}
+
 {% block content %}
-<div class="container my-5">
-    <div class="row">
-        <!-- Sidebar: hiển thị menu tùy theo vai trò -->
+<div class="container py-5">
+    <h1 class="mb-4 gold-text"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+    
+    <div class="row g-4 mb-4">
         <div class="col-md-3">
-            <div class="list-group shadow-sm">
-                {% if user.role == 'admin' %}
-                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="{% url 'manage_users' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-people"></i> Manage Users
-                    </a>
-                    <a href="{% url 'reports' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-file-earmark-text"></i> Reports
-                    </a>
-                    <a href="{% url 'settings' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-gear"></i> Settings
-                    </a>
-                {% elif user.role == 'accountant' %}
-                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="{% url 'orders' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-bag-check"></i> Orders
-                    </a>
-                    <a href="{% url 'reports' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-file-earmark-text"></i> Reports
-                    </a>
-                {% elif user.role == 'store_manager' %}
-                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="{% url 'inventory' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-box-seam"></i> Inventory
-                    </a>
-                    <a href="{% url 'orders' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-bag-check"></i> Orders
-                    </a>
-                    <a href="{% url 'customers' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-person-lines-fill"></i> Customers
-                    </a>
-                </a>
-                <a href="{% url 'counter_list' %}" class="list-group-item list-group-item-action">
-                    <i class="bi bi-shop"></i> Counters
-                </a>
-                    {% elif user.role == 'sales_staff' %}
-                    <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action active">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="{% url 'sales' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-currency-dollar"></i> Sales
-                    </a>
-                    <a href="{% url 'orders' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-bag-check"></i> Orders
-                    </a>
-                    <a href="{% url 'counter_list' %}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-shop"></i> Counters
-                    </a>
-                {% endif %}
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-currency-dollar"></i> Doanh thu</h5>
+                    <p class="display-6">{{ total_sales|floatformat:0 }} VNĐ</p>
+                </div>
             </div>
         </div>
-        <!-- Main Content -->
-        <div class="col-md-9
-        <!-- Main Content -->
-        <div class="col-md-9">
-            <h1 class="mb-4">Dashboard</h1>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Sales</h5>
-                            <p class="card-text display-6">${{ total_sales|floatformat:2 }}</p>
-                        </div>
-                    </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-cart-check"></i> Đơn hàng</h5>
+                    <p class="display-6">{{ orders_count }}</p>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Orders</h5>
-                            <p class="card-text display-6">{{ orders_count }}</p>
-                        </div>
-                    </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-box-seam"></i> Sản phẩm</h5>
+                    <p class="display-6">{{ products_count }}</p>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Products Available</h5>
-                            <p class="card-text display-6">{{ products_count }}</p>
-                        </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-shop"></i> Quầy hàng</h5>
+                    <p class="display-6">{{ counters_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5><i class="bi bi-graph-up"></i> Doanh thu 7 ngày</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5><i class="bi bi-clock-history"></i> Hoạt động gần đây</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for order in recent_orders %}
+                        <a href="{% url 'order_detail' order.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Đơn #{{ order.id }}</h6>
+                                <small>{{ order.date|timesince }} trước</small>
+                            </div>
+                            <p class="mb-1">{{ order.total_amount|floatformat:0 }} VNĐ</p>
+                        </a>
+                        {% endfor %}
                     </div>
                 </div>
             </div>

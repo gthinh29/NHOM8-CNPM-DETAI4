@@ -1,0 +1,42 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Danh sách sản phẩm</h1>
+    
+    <div class="mb-4">
+        <a href="{% url 'store:add_product.html' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Thêm sản phẩm
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% for product in object_list %}
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="card-text">Giá: {{ product.price|floatformat:0 }} VNĐ</p>
+                    <p class="card-text">Tồn kho: {{ product.stock }}</p>
+                    {% if product.slug %}
+                        <a href="{% url 'store:product-detail' product.slug %}" class="btn btn-primary">
+                            <i class="bi bi-eye"></i> Chi tiết
+                        </a>
+                    {% else %}
+                        <a href="{% url 'store:product-detail-pk' product.pk %}" class="btn btn-primary">
+                            <i class="bi bi-eye"></i> Chi tiết
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">Không có sản phẩm nào</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% include 'store/includes/pagination.html' %}
+</div>
+{% endblock %}

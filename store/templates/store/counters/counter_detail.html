@@ -1,46 +1,22 @@
-{% extends 'base.html' %}
-{% block title %}Chi tiết Quầy hàng - Jewelry Sales Manager{% endblock %}
+{% extends "store/base.html" %}
+
 {% block content %}
-<div class="container my-5">
-    <h1 class="mb-4 text-center">Chi tiết Quầy hàng</h1>
+<div class="container py-5">
+    <h1 class="mb-4 gold-text">
+        <i class="bi bi-shop me-2"></i>Chi tiết quầy hàng
+    </h1>
+
     <div class="card shadow-sm">
         <div class="card-body">
-            <h5 class="card-title">
-                <i class="bi bi-shop"></i> {{ counter.location }}
-            </h5>
-            <p class="card-text">
-                <strong>Nhân viên:</strong> {{ counter.assigned_employee|default:"Chưa gán" }}
-            </p>
-            <p class="card-text">
-                <strong>Số đơn hàng:</strong> {{ counter.orders.count }}
-            </p>
-            <h6 class="mt-4">Danh sách Đơn hàng</h6>
-            <ul class="list-group">
-                {% for order in counter.orders.all %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>Đơn hàng #{{ order.id }} - {{ order.total_amount|floatformat:2 }} VNĐ</span>
-                    <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-eye"></i> Xem
-                    </a>
-                </li>
-                {% empty %}
-                <li class="list-group-item">Không có đơn hàng nào.</li>
+            <h5 class="card-title">{{ counter.location }}</h5>
+            <p class="card-text">Quản lý bởi: {{ counter.manager.username }}</p>
+            <p class="card-text">Nhân viên phụ trách: {{ counter.assigned_employee.username|default:"Chưa có" }}</p>
+            <p class="card-text">Sản phẩm:</p>
+            <ul>
+                {% for product in counter.products.all %}
+                <li>{{ product.name }} - {{ product.price }} VNĐ</li>
                 {% endfor %}
             </ul>
-            <div class="mt-4">
-                {% if order.counter %}
-    <a href="{% url 'counter_detail' order.counter.id %}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Quay lại
-    </a>
-{% else %}
-    <a href="{% url 'counter_list' %}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Quay lại Danh sách
-    </a>
-{% endif %}
-                <a href="{% url 'counter_update' counter.id %}" class="btn btn-warning">
-                    <i class="bi bi-pencil"></i> Sửa
-                </a>
-            </div>
         </div>
     </div>
 </div>

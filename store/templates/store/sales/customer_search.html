@@ -1,0 +1,80 @@
+{% extends "store/base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-search me-2"></i>Tìm kiếm khách hàng</h4>
+        </div>
+        
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <form method="get">
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="q" 
+                                   placeholder="Nhập tên hoặc số điện thoại..."
+                                   value="{{ request.GET.q }}">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if customers %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên khách hàng</th>
+                            <th>Số điện thoại</th>
+                            <th>Tổng mua</th>
+                            <th>Lần cuối mua</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>{{ customer.name }}</td>
+                            <td>{{ customer.phone }}</td>
+                            <td>{{ customer.total_purchases|intcomma }}₫</td>
+                            <td>{{ customer.last_purchase|date:"d/m/Y H:i"|default:"Chưa có" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'store:sales-order-create' %}?customer_id={{ customer.id }}" 
+                                   class="btn btn-sm btn-success">
+                                   <i class="bi bi-cart-plus"></i> Tạo đơn
+                                </a>
+                                <a href="#" 
+                                   class="btn btn-sm btn-outline-primary"
+                                   data-bs-toggle="modal" 
+                                   data-bs-target="#customerDetailModal{{ customer.id }}">
+                                   <i class="bi bi-info-circle"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <!-- Customer Detail Modal -->
+                        <div class="modal fade" id="customerDetailModal{{ customer.id }}">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    {% include "store/sales/partials/customer_detail.html" %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>Không tìm thấy khách hàng phù hợp
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

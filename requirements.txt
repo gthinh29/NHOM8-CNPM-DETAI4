@@ -6,4 +6,4 @@ Pillow
 pytz
 django-crispy-forms
 django-widget-tweaks
-
+reportlab==4.1.0

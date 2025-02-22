@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Jewelry Sales Manager{% endblock %}</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --gold: #C5A330;
+            --dark-bg: linear-gradient(180deg, #2c3e50 0%, #1a2530 100%);
+            --light-bg: #f8f9fa;
+            --hover-bg: #34495e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            letter-spacing: 0.02em;
+            background: var(--light-bg);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            position: fixed;
+            background: var(--dark-bg);
+            color: white;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            transform: translateX(-100%);
+            box-shadow: 4px 0 12px rgba(0,0,0,0.1);
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 30px;
+            transition: all 0.3s;
+        }
+
+        .nav-link {
+            color: #bdc3c7 !important;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin: 5px 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-link:hover {
+            background: var(--hover-bg);
+            color: white !important;
+            transform: translateX(12px);
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .nav-link.active {
+            background: var(--gold);
+            color: white !important;
+            font-weight: 500;
+        }
+
+        .nav-link i {
+            width: 24px;
+            text-align: center;
+            margin-right: 12px;
+        }
+
+        .gold-text {
+            color: var(--gold);
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 0.05em;
+        }
+
+        .user-info {
+            background: rgba(52, 73, 94, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (min-width: 992px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 280px;
+            }
+        }
+
+        .cart-badge {
+            font-size: 0.7rem;
+            vertical-align: top;
+            margin-left: auto;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            display: none;
+            cursor: pointer;
+        }
+
+        .sidebar.active + .sidebar-overlay {
+            display: block;
+        }
+
+        .sidebar-header {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1.5rem;
+            }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h3 class="gold-text mb-0">{{ store_name|default:"JSM System" }}</h3>
+        {% if user.is_authenticated %}
+        <div class="user-info mt-3">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-person-badge fs-4 me-3"></i>
+                <div>
+                    <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                    <small class="text-muted">{{ user.get_role_display }}</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <nav class="nav flex-column mt-3">
+        <!-- Common Menu -->
+        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+           href="{% url 'store:dashboard' %}">
+           <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+
+        <!-- Role-Based Menu -->
+        {% if user.is_authenticated %}
+            <!-- Sales Staff -->
+            {% if user.role == 'sales_staff' %}
+            <a class="nav-link" href="{% url 'store:counter-detail' pk=user.assigned_counter.first.id %}">
+                <i class="bi bi-shop me-2"></i>Quầy của tôi
+            </a>
+            <a class="nav-link {% if 'cart' in request.resolver_match.url_name %}active{% endif %}" 
+               href="{% url 'store:cart' %}">
+               <i class="bi bi-cart me-2"></i>Giỏ hàng
+               <span class="badge bg-danger cart-badge">
+                   {% if request.session.cart %}{{ request.session.cart.items|length }}{% else %}0{% endif %}
+               </span>
+            </a>
+            {% endif %}
+
+            <!-- Store Manager -->
+            {% if user.role == 'store_manager' %}
+            <a class="nav-link" href="{% url 'store:manage-counters' %}">
+                <i class="bi bi-building-gear me-2"></i>Quản lý quầy
+            </a>
+            <a class="nav-link" href="{% url 'store:counter-list' %}">
+                <i class="bi bi-list-task me-2"></i>Danh sách quầy
+            </a>
+            {% endif %}
+
+            <!-- Quản lý sản phẩm -->
+
+            {% if user.role == 'store_manager' or user.role == 'admin' %}
+            <div class="sidebar-section">
+                <a class="nav-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}" 
+                   href="{% url 'store:product_list' %}">
+                   <i class="bi bi-box-seam me-2"></i>Danh sách sản phẩm
+                </a>
+                <a class="nav-link {% if request.resolver_match.url_name == 'add_product' %}active{% endif %}" 
+                   href="{% url 'store:add_product.html' %}">
+                   <i class="bi bi-plus-circle me-2"></i>Thêm sản phẩm
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Admin -->
+            {% if user.role == 'admin' %}
+            <a class="nav-link" href="{% url 'store:user-management' %}">
+                <i class="bi bi-people-fill me-2"></i>Quản lý người dùng
+            </a>
+            <a class="nav-link" href="{% url 'store:system-settings' %}">
+                <i class="bi bi-gear-wide-connected me-2"></i>Cài đặt hệ thống
+            </a>
+            {% endif %}
+
+            <!-- Accountant -->
+            {% if user.role == 'accountant' %}
+            <a class="nav-link" href="{% url 'store:sales-report' %}">
+                <i class="bi bi-graph-up-arrow me-2"></i>Báo cáo tài chính
+            </a>
+            {% endif %}
+
+            <!-- Common Links -->
+            <div class="mt-4">
+                <a class="nav-link" href="{% url 'store:profile' %}">
+                    <i class="bi bi-person-circle me-2"></i>Hồ sơ của tôi
+                </a>
+                <a class="nav-link text-danger" href="{% url 'store:logout' %}">
+                    <i class="bi bi-box-arrow-left me-2"></i>Đăng xuất
+                </a>
+            </div>
+        {% else %}
+            <a class="nav-link" href="{% url 'store:login' %}">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+            </a>
+        {% endif %}
+    </nav>
+</div>
+
+<!-- Overlay cho mobile -->
+<div class="sidebar-overlay"></div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <button class="btn btn-dark d-lg-none mb-3" onclick="toggleSidebar()">
+        <i class="bi bi-list"></i>
+    </button>
+
+    {% block content %}{% endblock %}
+
+    <footer class="mt-5 pt-4 border-top">
+        <div class="text-center text-muted">
+            <p class="mb-0">&copy; 2024 Jewelry Sales Manager. All rights reserved.</p>
+            <small>v1.2.0 | Built with Django</small>
+        </div>
+    </footer>
+</div>
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        sidebar.classList.toggle('active');
+    }
+
+    // Đóng sidebar khi click ra ngoài (mobile)
+    document.querySelector('.sidebar-overlay').addEventListener('click', toggleSidebar);
+
+    // Đóng sidebar khi resize màn hình lớn hơn 992px
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 992) {
+            document.querySelector('.sidebar').classList.remove('active');
+        }
+    });
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,31 @@
+{% extends "store/base.html" %}
+
+{% block content %}
+  <h1>Customer List</h1>
+  <table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for customer in customers %}
+        <tr>
+          <td>{{ customer.username }}</td>
+          <td>{{ customer.get_full_name }}</td>
+          <td>{{ customer.email }}</td>
+          <td>
+            <a href="{% url 'store:client-detail' customer.username %}">View Details</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4">No customers found.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

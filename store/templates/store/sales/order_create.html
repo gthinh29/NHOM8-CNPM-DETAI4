@@ -1,0 +1,78 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="sales-interface">
+    <!-- Thanh công cụ -->
+    <div class="sales-toolbar bg-dark text-white p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-3">
+                <button class="btn btn-sm btn-light" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#customerSearchModal">
+                    <i class="bi bi-search me-2"></i>Tìm khách hàng
+                </button>
+                <button class="btn btn-sm btn-light" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#quickCustomerModal">
+                    <i class="bi bi-person-plus me-2"></i>Thêm khách mới
+                </button>
+            </div>
+            <div id="order-status" class="badge bg-secondary">Đang tạo đơn</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <div class="row gx-4">
+            <!-- Product Selector -->
+            <div class="col-md-4">
+                {% include "store/sales/partials/product_selector.html" %}
+            </div>
+            
+            <!-- Order Details -->
+            <div class="col-md-8">
+                {% include "store/sales/partials/order_form.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+{% include "store/sales/partials/customer_search_modal.html" %}
+{% include "store/sales/partials/quick_customer_modal.html" %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Xử lý logic thêm sản phẩm
+    document.querySelectorAll('.add-product').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.id;
+            // Gọi API thêm sản phẩm
+            fetch(`/api/add-to-cart/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => updateOrderDisplay(data))
+        });
+    });
+
+    function updateOrderDisplay(data) {
+        // Cập nhật giao diện
+        document.getElementById('cart-total').textContent = data.total;
+        document.getElementById('cart-items').innerHTML = data.items.map(item => `
+            <div class="cart-item">
+                <span>${item.name}</span>
+                <span>${item.quantity} x ${item.price}</span>
+            </div>
+        `).join('');
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

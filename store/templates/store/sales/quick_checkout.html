@@ -1,0 +1,47 @@
+{% extends "store/base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card shadow-lg">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0"><i class="bi bi-check2-circle me-2"></i>Thanh toán thành công</h4>
+        </div>
+        
+        <div class="card-body text-center">
+            <div class="mb-4">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+            </div>
+            
+            <h3 class="mb-3">Cảm ơn quý khách!</h3>
+            <p class="lead">Đơn hàng #{{ order.id }} đã được thanh toán thành công</p>
+            
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-6">
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            <h5>Thông tin đơn hàng</h5>
+                            <ul class="list-unstyled">
+                                <li>Tổng tiền: {{ order.total_amount|intcomma }}₫</li>
+                                <li>Phương thức: {{ order.payment_method }}</li>
+                                <li>Thời gian: {{ order.created_at|date:"d/m/Y H:i" }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'store:sales-order-invoice' order.id %}" 
+                   class="btn btn-primary btn-lg"
+                   target="_blank">
+                   <i class="bi bi-printer me-2"></i>In hóa đơn
+                </a>
+                <a href="{% url 'store:sales-order-create' %}" 
+                   class="btn btn-outline-secondary btn-lg">
+                   <i class="bi bi-plus-circle me-2"></i>Tạo đơn mới
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

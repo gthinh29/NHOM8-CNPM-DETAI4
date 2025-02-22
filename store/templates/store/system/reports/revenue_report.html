@@ -1,0 +1,54 @@
+# store/templates/store/revenue_report.html
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-dark text-white">
+            <h3 class="mb-0"><i class="bi bi-bar-chart-line"></i> Báo cáo Doanh thu</h3>
+        </div>
+        
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <h4 class="gold-text">Tổng doanh thu: {{ total_revenue|floatformat:0 }} VNĐ</h4>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="btn-group">
+                        <button class="btn btn-outline-dark">Hôm nay</button>
+                        <button class="btn btn-outline-dark">Tuần này</button>
+                        <button class="btn btn-outline-dark">Tháng này</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+
+            <div class="mt-4 table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Ngày</th>
+                            <th>Số đơn</th>
+                            <th>Doanh thu</th>
+                            <th>Sản phẩm bán chạy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for daily in daily_sales %}
+                        <tr>
+                            <td>{{ daily.date|date:"d/m/Y" }}</td>
+                            <td>{{ daily.order_count }}</td>
+                            <td>{{ daily.total|floatformat:0 }} VNĐ</td>
+                            <td>{{ daily.top_product }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">
+        <i class="bi bi-exclamation-triangle me-2"></i>Xác nhận xóa sản phẩm
+    </h1>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <p class="lead">Bạn có chắc chắn muốn xóa sản phẩm <strong>{{ product.name }}</strong> không?</p>
+            <p class="text-danger">Hành động này không thể hoàn tác!</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-danger me-2">
+                        <i class="bi bi-trash me-2"></i>Xóa
+                    </button>
+                    <a href="{% url 'product_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Hủy bỏ
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

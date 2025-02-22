@@ -1,0 +1,49 @@
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Thông tin đơn hàng</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" id="order-form">
+            {% csrf_token %}
+            
+            <!-- Customer Info -->
+            <div class="mb-4">
+                <div class="alert alert-info d-flex align-items-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <div>
+                        <span id="customer-info">
+                            {% if customer %}
+                                {{ customer.name }} - {{ customer.phone }}
+                            {% else %}
+                                Khách vãng lai
+                            {% endif %}
+                        </span>
+                        <input type="hidden" name="customer_id" value="{{ customer.id|default:'' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Products -->
+            <div class="mb-4">
+                <h6>Sản phẩm đã chọn</h6>
+                <div id="cart-items" class="mb-3">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="bg-light p-3 rounded">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">Tổng tiền: <span id="cart-total">0</span>₫</h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-credit-card me-2"></i>Hoàn tất thanh toán
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

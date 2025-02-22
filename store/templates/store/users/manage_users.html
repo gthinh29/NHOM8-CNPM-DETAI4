@@ -1,0 +1,48 @@
+{% extends 'store/base.html' %}
+{% block title %}Manage Users - Jewelry Sales Manager{% endblock %}
+{% block content %}
+<div class="container my-5">
+  <h1 class="mb-4">Manage Users</h1>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">User List</h5>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead class="table-light">
+            <tr>
+              <th>User ID</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <td>{{ user.pk }}</td>
+              <td>{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.phone }}</td>
+              <td>{{ user.get_role_display }}</td>
+              <td>
+                <a href="#" class="btn btn-sm btn-primary">Edit</a>
+                <a href="#" class="btn btn-sm btn-danger">Delete</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center">No users found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <a href="{% url 'store:dashboard' %}" class="btn btn-secondary mt-3">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

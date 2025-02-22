@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Quản lý Khách Hàng</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Tên khách hàng</th>
+                            <th>Số điện thoại</th>
+                            <th>Email</th>
+                            <th>Tổng mua</th>
+                            <th width="120"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>{{ customer.get_full_name }}</td>
+                            <td>{{ customer.phone }}</td>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ customer.total_spent|floatformat:0 }}₫</td>
+                            <td class="text-right">
+                                <a href="{% url 'store:customer-detail' customer.username %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Không có khách hàng nào</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

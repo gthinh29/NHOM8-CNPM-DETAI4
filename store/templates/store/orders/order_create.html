@@ -1,0 +1,162 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Product Selection -->
+        <div class="col-md-4 border-end">
+            <div class="sticky-top" style="top: 70px;">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Tìm sản phẩm..." 
+                           id="product-search">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                
+                <div class="list-group overflow-auto" style="max-height: 70vh;">
+                    {% for product in products %}
+                    <a href="#" class="list-group-item list-group-item-action product-item"
+                       data-id="{{ product.id }}"
+                       data-name="{{ product.name }}"
+                       data-price="{{ product.price }}"
+                       data-stock="{{ product.stock }}">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">{{ product.name }}</h6>
+                                <small class="text-muted">Tồn kho: {{ product.stock }}</small>
+                            </div>
+                            <span class="text-primary">{{ product.price|floatformat:0 }}₫</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Details -->
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-receipt"></i> Tạo đơn hàng mới</h4>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" id="order-form">
+                        {% csrf_token %}
+                        
+                        <!-- Customer Info -->
+                        <div class="mb-4">
+                            <h5><i class="bi bi-person"></i> Thông tin khách hàng</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" 
+                                           name="customer_name" required 
+                                           placeholder="Họ tên khách hàng">
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="tel" class="form-control" 
+                                           name="customer_phone" required
+                                           placeholder="Số điện thoại">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selected Products -->
+                        <div class="mb-4">
+                            <h5><i class="bi bi-cart"></i> Sản phẩm đã chọn</h5>
+                            <div id="selected-products" class="mb-3">
+                                <!-- Dynamic content from JS -->
+                            </div>
+                        </div>
+
+                        <!-- Payment Section -->
+                        <div class="bg-light p-4 rounded-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Tổng tiền: <span id="total-amount">0</span>₫</h5>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="bi bi-credit-card"></i> Thanh toán
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript Handling -->
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectedProducts = {};
+    
+    // Product selection
+    document.querySelectorAll('.product-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const productId = this.dataset.id;
+            
+            if(!selectedProducts[productId]) {
+                selectedProducts[productId] = {
+                    name: this.dataset.name,
+                    price: parseFloat(this.dataset.price),
+                    quantity: 1,
+                    stock: parseInt(this.dataset.stock)
+                };
+            } else {
+                selectedProducts[productId].quantity++;
+            }
+            
+            updateSelectedProductsDisplay();
+        });
+    });
+
+    function updateSelectedProductsDisplay() {
+        const container = document.getElementById('selected-products');
+        let total = 0;
+        
+        container.innerHTML = Object.values(selectedProducts).map(product => `
+            <div class="card mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">${product.name}</h6>
+                            <small>${product.price.toLocaleString()}₫/sản phẩm</small>
+                        </div>
+                        <div class="input-group input-group-sm" style="width: 120px;">
+                            <button class="btn btn-outline-secondary minus-btn" 
+                                    type="button" 
+                                    data-id="${product.id}">-</button>
+                            <input type="number" 
+                                   class="form-control text-center" 
+                                   value="${product.quantity}" 
+                                   min="1" 
+                                   max="${product.stock}"
+                                   data-id="${product.id}">
+                            <button class="btn btn-outline-secondary plus-btn" 
+                                    type="button" 
+                                    data-id="${product.id}">+</button>
+                        </div>
+                        <div class="ms-3" style="width: 100px;">
+                            <strong>${(product.price * product.quantity).toLocaleString()}₫</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        // Update total
+        total = Object.values(selectedProducts).reduce((sum, p) => sum + (p.price * p.quantity), 0);
+        document.getElementById('total-amount').textContent = total.toLocaleString();
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

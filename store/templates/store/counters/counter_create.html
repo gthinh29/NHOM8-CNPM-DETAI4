@@ -1,42 +1,68 @@
-{% extends "base.html" %}
-{% block title %}Create New Counter - Jewelry Sales Manager{% endblock %}
+{% extends "store/base.html" %}
+{% load static widget_tweaks %}
+
+{% block title %}Tạo Quầy Mới - Jewelry Sales Manager{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Create New Counter</h2>
-    
-    <div class="card shadow-sm">
+<div class="container py-5">
+    <div class="card shadow-lg mx-auto" style="max-width: 800px;">
+        <div class="card-header bg-dark text-white">
+            <h3 class="mb-0"><i class="bi bi-shop me-2"></i>Tạo Quầy Mới</h3>
+            <small class="text-muted">Quản lý hệ thống quầy bán hàng</small>
+        </div>
+        
         <div class="card-body">
-            <form method="post">
+            <form method="post" class="needs-validation" novalidate>
                 {% csrf_token %}
                 
-                <!-- Ẩn trường manager và tự động gán giá trị -->
+                <!-- Hidden Fields -->
                 <input type="hidden" name="manager" value="{{ request.user.id }}">
 
-                <div class="mb-3">
-                    <label for="id_location" class="form-label">Location</label>
-                    {{ form.location }}
-                    <div class="form-text">Enter counter location (e.g., Floor 1, Section A)</div>
+                <!-- Location Field -->
+                <div class="mb-4">
+                    <label for="id_location" class="form-label">Vị trí quầy</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                        {% render_field form.location class+="form-control form-control-lg" placeholder="Nhập vị trí quầy" %}
+                    </div>
+                    <div class="form-text">Ví dụ: Tầng 1 - Khu A, Tầng 2 - Khu Trang sức</div>
+                    {% for error in form.location.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
-                <div class="mb-3">
-                    <label for="id_assigned_employee" class="form-label">Assigned Staff</label>
-                    {{ form.assigned_employee }}
-                    <div class="form-text">Select a staff member to assign to this counter.</div>
+                <!-- Assigned Employee Field -->
+                <div class="mb-4">
+                    <label class="form-label">Nhân viên phụ trách</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                        {% render_field form.assigned_employee class+="form-select form-select-lg" %}
+                    </div>
+                    {% for error in form.assigned_employee.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
-                <div class="mb-3">
-                    <label for="id_products" class="form-label">Assigned Products</label>
-                    {{ form.products }}
-                    <div class="form-text">Select products available at this counter.</div>
+                <!-- Products Field -->
+                <div class="mb-4">
+                    <label class="form-label">Sản phẩm được phân bổ</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-box-seam"></i></span>
+                        {% render_field form.products class+="form-select form-select-lg" multiple="multiple" %}
+                    </div>
+                    <div class="form-text">Giữ phím Ctrl/Cmd để chọn nhiều sản phẩm</div>
+                    {% for error in form.products.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
-                <div class="d-flex justify-content-between">
-                    <a href="{% url 'manage_counters' %}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Back to Counters
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between mt-5">
+                    <a href="{% url 'store:manage-counters' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left-circle me-2"></i>Quay lại
                     </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-plus-circle"></i> Create Counter
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-save me-2"></i>Lưu Quầy Mới
                     </button>
                 </div>
             </form>
@@ -44,21 +70,43 @@
     </div>
 </div>
 
-<!-- Thêm Bootstrap Icons nếu chưa có -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-
 <style>
-    .form-control:focus {
-        border-color: #86b7fe;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    .form-control-lg, .form-select-lg {
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
     }
-    .card {
-        max-width: 600px;
-        margin: 0 auto;
+    
+    .input-group-text {
+        background: var(--dark-bg);
+        color: white;
+        border: none;
+        min-width: 45px;
+        justify-content: center;
     }
-    .form-text {
-        font-size: 0.875em;
-        color: #6c757d;
+    
+    select[multiple] {
+        height: 150px;
+        background-image: none;
     }
 </style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tự động focus vào ô nhập đầu tiên có lỗi
+    const errorFields = document.querySelectorAll('.is-invalid');
+    if (errorFields.length > 0) {
+        errorFields[0].focus();
+    }
+    
+    // Thêm style cho select multiple
+    const multiSelect = document.querySelector('select[multiple]');
+    if (multiSelect) {
+        multiSelect.style.border = '1px solid #dee2e6';
+        multiSelect.style.padding = '0.5rem';
+    }
+});
+</script>
+{% endblock %}
+
 {% endblock %}

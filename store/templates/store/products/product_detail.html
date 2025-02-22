@@ -1,0 +1,46 @@
+{% extends 'store/base.html' %}
+
+{% block title %}{{ product.name }} - Details{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Cột hiển thị hình ảnh sản phẩm -->
+        <div class="col-md-6">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" class="img-fluid rounded shadow-sm" alt="{{ product.name }}">
+            {% else %}
+                <img src="https://via.placeholder.com/600x400" class="img-fluid rounded shadow-sm" alt="{{ product.name }}">
+            {% endif %}
+        </div>
+        <!-- Cột hiển thị thông tin sản phẩm -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title">{{ product.name }}</h3>
+                    <p class="card-text h4 text-success">
+                        {{ product.price|floatformat:2 }} VNĐ
+                    </p>
+                    <p class="card-text"><strong>Stock:</strong> {{ product.stock }}</p>
+                    <hr>
+                    <p class="card-text">
+                        {% if product.description %}
+                            {{ product.description }}
+                        {% else %}
+                            {{ product.get_product_details }}
+                        {% endif %}
+                    </p>
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'store:add-to-cart' product.id %}" class="btn btn-success">
+                            <i class="bi bi-cart-plus"></i> Add to Cart
+                        </a>
+                        <a href="{% url 'store:product_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Products
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

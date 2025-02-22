@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Thông tin Khách Hàng</h2>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    Thông tin cá nhân
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-5">Họ tên:</dt>
+                        <dd class="col-sm-7">{{ customer.get_full_name }}</dd>
+
+                        <dt class="col-sm-5">Username:</dt>
+                        <dd class="col-sm-7">{{ customer.username }}</dd>
+
+                        <dt class="col-sm-5">Điện thoại:</dt>
+                        <dd class="col-sm-7">{{ customer.phone }}</dd>
+
+                        <dt class="col-sm-5">Email:</dt>
+                        <dd class="col-sm-7">{{ customer.email }}</dd>
+
+                        <dt class="col-sm-5">Tổng mua:</dt>
+                        <dd class="col-sm-7">{{ customer.total_spent|floatformat:0 }}₫</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    Lịch sử mua hàng
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Mã đơn</th>
+                                    <th>Ngày mua</th>
+                                    <th>Số lượng SP</th>
+                                    <th>Tổng tiền</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in customer.orders.all %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.date|date:"d/m/Y" }}</td>
+                                    <td>{{ order.order_items.count }}</td>
+                                    <td>{{ order.total_amount|floatformat:0 }}₫</td>
+                                    <td class="text-right">
+                                        <a href="{% url 'store:sales-order-detail' order.id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Chưa có đơn hàng nào</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

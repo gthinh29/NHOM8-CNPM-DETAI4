@@ -1,0 +1,264 @@
+{% extends 'store/base.html' %}
+{% load static %}
+{% load static widget_tweaks %}
+{% block title %}Hồ sơ - Jewelry Sales Manager{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Side Navigation -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <div class="position-relative mb-3">
+                        <img src="{% static 'store/images/default-avatar.png' %}" 
+                             class="rounded-circle border border-3 border-warning" 
+                             width="120" height="120" 
+                             alt="Avatar người dùng">
+                        <a href="#" class="btn btn-warning btn-sm rounded-circle position-absolute"
+                           style="bottom: 10px; right: 25px;">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
+                    <h5 class="mb-1">{{ user.get_full_name }}</h5>
+                    <div class="text-muted small">{{ user.get_role_display }}</div>
+                    
+                    <nav class="nav flex-column mt-4">
+                        <a class="nav-link active" href="#personal-info" data-bs-toggle="tab">
+                            <i class="bi bi-person me-2"></i>Thông tin cá nhân
+                        </a>
+                        <a class="nav-link" href="#security" data-bs-toggle="tab">
+                            <i class="bi bi-shield-lock me-2"></i>Bảo mật
+                        </a>
+                        {% if user.is_superuser %}
+                        <a class="nav-link" href="#admin-settings" data-bs-toggle="tab">
+                            <i class="bi bi-gear me-2"></i>Cài đặt quản trị
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-8">
+            <div class="tab-content">
+                <!-- Personal Info Tab -->
+                <div class="tab-pane fade show active" id="personal-info">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h4 class="card-title mb-4"><i class="bi bi-person me-2"></i>Thông tin cá nhân</h4>
+                            
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="row g-3">
+                                    <!-- Username -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {% render_field form.username class+="form-control" placeholder=" " %}
+                                            <label for="{{ form.username.id_for_label }}">Tên đăng nhập</label>
+                                            {% for error in form.username.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {% render_field form.email class+="form-control" placeholder=" " %}
+                                            <label for="{{ form.email.id_for_label }}">Địa chỉ email</label>
+                                            {% for error in form.email.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <!-- First & Last Name -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {% render_field form.first_name class+="form-control" placeholder=" " %}
+                                            <label for="{{ form.first_name.id_for_label }}">Họ</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {% render_field form.last_name class+="form-control" placeholder=" " %}
+                                            <label for="{{ form.last_name.id_for_label }}">Tên</label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Phone & Role -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {% render_field form.phone class+="form-control" placeholder=" " %}
+                                            <label for="{{ form.phone.id_for_label }}">Số điện thoại</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {% render_field form.role class+="form-select" disabled="disabled" %}
+                                            <label for="{{ form.role.id_for_label }}">Vai trò</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                                        <i class="bi bi-arrow-left me-2"></i>Quay lại
+                                    </button>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-save me-2"></i>Cập nhật
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Tab -->
+                <div class="tab-pane fade" id="security">
+                    <div class="card shadow-sm mt-4">
+                        <div class="card-body">
+                            <h4 class="card-title mb-4"><i class="bi bi-shield-lock me-2"></i>Bảo mật</h4>
+                            
+                            <!-- Password Change -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">Đổi mật khẩu</h5>
+                                <form method="post" action="{% url 'store:password_change' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="is_password_change" value="true">
+                                    {% csrf_token %}
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <div class="form-floating">
+                                                <input type="password" class="form-control" 
+                                                       id="old_password" name="old_password" required>
+                                                <label for="old_password">Mật khẩu hiện tại</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-floating">
+                                                <input type="password" class="form-control" 
+                                                       id="new_password1" name="new_password1" required>
+                                                <label for="new_password1">Mật khẩu mới</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-floating">
+                                                <input type="password" class="form-control" 
+                                                       id="new_password2" name="new_password2" required>
+                                                <label for="new_password2">Xác nhận mật khẩu</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning mt-3">
+                                        <i class="bi bi-key me-2"></i>Đổi mật khẩu
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Session Security -->
+                            <div class="border-top pt-4">
+                                <h5 class="mb-3">Bảo mật phiên làm việc</h5>
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Lần đăng nhập gần nhất: {{ user.last_login|date:"d/m/Y H:i" }}
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-danger">
+                                        <i class="bi bi-box-arrow-left me-2"></i>Đăng xuất tất cả thiết bị
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="tab-pane fade" id="danger-zone">
+                    <div class="card border-danger mt-4">
+                        <div class="card-header bg-danger text-white">
+                            <i class="bi bi-exclamation-octagon me-2"></i>Khu vực nguy hiểm
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex flex-column gap-3">
+                                <div>
+                                    <h5>Xóa tài khoản</h5>
+                                    <p class="text-muted">Hành động này sẽ xóa vĩnh viễn tất cả dữ liệu của bạn.</p>
+                                    <button class="btn btn-outline-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteAccountModal">
+                                        <i class="bi bi-trash3 me-2"></i>Xóa tài khoản
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Xác nhận xóa tài khoản
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'store:delete-account' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Nhập mật khẩu để xác nhận:</label>
+                        <input type="password" 
+                               class="form-control" 
+                               name="password" 
+                               required
+                               placeholder="Nhập mật khẩu hiện tại">
+                    </div>
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-octagon me-2"></i>
+                        Hành động này không thể hoàn tác! Tất cả dữ liệu sẽ bị xóa vĩnh viễn.
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" 
+                                class="btn btn-secondary" 
+                                data-bs-dismiss="modal">
+                            Hủy bỏ
+                        </button>
+                        <button type="submit" 
+                                class="btn btn-danger">
+                            <i class="bi bi-trash3 me-2"></i>Xác nhận xóa
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tự động focus vào field đầu tiên có lỗi
+    const errorFields = document.querySelectorAll('.is-invalid');
+    if (errorFields.length > 0) {
+        errorFields[0].focus();
+    }
+    
+    // Xử lý hiển thị tab dựa trên URL hash
+    const urlHash = window.location.hash;
+    if (urlHash) {
+        const trigger = new bootstrap.Tab(document.querySelector(`a[href="${urlHash}"]`));
+        trigger.show();
+    }
+});
+</script>
+{% endblock %}

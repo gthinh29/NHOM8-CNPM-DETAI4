@@ -1,0 +1,93 @@
+{% extends "store/base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Bảng Điều Khiển Quầy {{ counter.location }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- Thống kê nhanh -->
+                        <div class="col-6 col-md-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <h5 class="text-success">{{ today_sales|intcomma }}₫</h5>
+                                    <small>Doanh thu hôm nay</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <h5 class="text-info">{{ pending_orders }}</h5>
+                                    <small>Đơn chờ xử lý</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Nút hành động nhanh -->
+                    <div class="mt-4 d-grid gap-2 d-md-flex">
+                        <a href="{% url 'store:sales-order-create' %}" class="btn btn-success">
+                            <i class="bi bi-cart-plus me-2"></i>Tạo đơn mới
+                        </a>
+                        <a href="{% url 'store:sales-customer-list' %}" class="btn btn-info">
+                            <i class="bi bi-people me-2"></i>Khách hàng
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách đơn hàng gần đây -->
+    <div class="card shadow">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Đơn hàng gần đây</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.customer.name|default:"Khách vãng lai" }}</td>
+                            <td>{{ order.total_amount|intcomma }}₫</td>
+                            <td>
+                                <span class="badge bg-{{ order.get_status_color }}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'store:sales-order-detail' order.pk %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                   Xem chi tiết
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Chưa có đơn hàng nào</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

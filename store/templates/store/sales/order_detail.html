@@ -1,0 +1,23 @@
+{% extends "store/base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Chi tiết Đơn hàng #{{ order.pk }}</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Khách hàng:</strong> {{ order.customer_name }}</p>
+            <p><strong>Tổng tiền:</strong> {{ order.total_amount|floatformat:0 }}₫</p>
+            
+            <h4>Sản phẩm</h4>
+            <ul class="list-group">
+                {% for item in order.order_items.all %}
+                <li class="list-group-item">
+                    {{ item.product.name }} x {{ item.quantity }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

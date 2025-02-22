@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="alert alert-info">
+        Hóa đơn này chỉ có sẵn ở định dạng PDF. 
+        <a href="{% url 'store:sales-order-invoice' object.id %}" 
+           class="alert-link">Nhấn để tải xuống</a>
+    </div>
+</div>
+{% endblock %}

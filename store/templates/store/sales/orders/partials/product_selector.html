@@ -1,0 +1,40 @@
+<div class="card shadow-sm h-100">
+    <div class="card-header bg-white border-bottom">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" 
+                   class="form-control" 
+                   placeholder="Tìm kiếm sản phẩm..."
+                   hx-get="{% url 'store:sales-product-list' %}"
+                   hx-trigger="keyup changed delay:300ms"
+                   hx-target="#product-results">
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div id="product-results" class="row g-0">
+            {% for product in products %}
+            <div class="col-12">
+                <div class="product-item p-3 border-bottom">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ product.image.url }}" 
+                             class="rounded me-3" 
+                             width="60" 
+                             alt="{{ product.name }}">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ product.name }}</h6>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Tồn kho: {{ product.stock }}</small>
+                                <strong class="text-primary">{{ product.price|intcomma }}₫</strong>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-primary add-product"
+                                data-id="{{ product.id }}">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

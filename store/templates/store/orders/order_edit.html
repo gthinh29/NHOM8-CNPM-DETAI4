@@ -1,0 +1,31 @@
+{% extends 'store/base.html' %}
+{% block title %}Edit Order #{{ order.id }}{% endblock %}
+{% block content %}
+<div class="container my-5">
+    <h1>Edit Order #{{ order.id }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Current Quantity</th>
+                    <th>New Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.order_items.all %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>
+                        <input type="number" name="quantity_{{ item.id }}" value="{{ item.quantity }}" min="1" class="form-control">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">Update Order</button>
+    </form>
+</div>
+{% endblock %}
