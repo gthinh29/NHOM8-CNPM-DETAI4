@@ -1,78 +1,92 @@
 {% extends "store/base.html" %}
 {% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+<style>
+  /* Style riêng cho trang Order Create */
+  .order-create-container {
+      padding: 20px;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="sales-interface">
-    <!-- Thanh công cụ -->
-    <div class="sales-toolbar bg-dark text-white p-3 mb-4">
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="d-flex gap-3">
-                <button class="btn btn-sm btn-light" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#customerSearchModal">
-                    <i class="bi bi-search me-2"></i>Tìm khách hàng
-                </button>
-                <button class="btn btn-sm btn-light" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#quickCustomerModal">
-                    <i class="bi bi-person-plus me-2"></i>Thêm khách mới
-                </button>
-            </div>
-            <div id="order-status" class="badge bg-secondary">Đang tạo đơn</div>
-        </div>
+<div class="order-create-container">
+  <!-- Thanh công cụ -->
+  <div class="sales-toolbar bg-dark text-white p-3 mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex gap-3">
+        <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#customerSearchModal">
+          <i class="bi bi-search me-2"></i>Tìm khách hàng
+        </button>
+        <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#quickCustomerModal">
+          <i class="bi bi-person-plus me-2"></i>Thêm khách mới
+        </button>
+      </div>
+      <div id="order-status" class="badge bg-secondary">Đang tạo đơn</div>
     </div>
+  </div>
 
-    <!-- Main Content -->
-    <div class="container-fluid">
-        <div class="row gx-4">
-            <!-- Product Selector -->
-            <div class="col-md-4">
-                {% include "store/sales/partials/product_selector.html" %}
-            </div>
-            
-            <!-- Order Details -->
-            <div class="col-md-8">
-                {% include "store/sales/partials/order_form.html" %}
-            </div>
-        </div>
+  <!-- Nội dung chính -->
+  <div class="container-fluid">
+    <div class="row gx-4">
+      <!-- Cột chọn sản phẩm -->
+      <div class="col-md-4">
+        {% include "store/sales/orders/partials/product_selector.html" %}
+      </div>
+      
+      <!-- Cột chi tiết đơn hàng và thanh toán -->
+      <div class="col-md-8">
+        {% include "store/sales/orders/partials/order_form.html" %}
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Modals -->
-{% include "store/sales/partials/customer_search_modal.html" %}
-{% include "store/sales/partials/quick_customer_modal.html" %}
+<!-- Các modal hỗ trợ -->
+{% include "store/sales/customer_search.html" %}
+{% include "store/sales/orders/partials/quick_customer_form.html" %}
+{% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Xử lý logic thêm sản phẩm
-    document.querySelectorAll('.add-product').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const productId = this.dataset.id;
-            // Gọi API thêm sản phẩm
-            fetch(`/api/add-to-cart/${productId}/`, {
+document.addEventListener('DOMContentLoaded', function(){
+    // Xử lý submit form đơn hàng
+    const orderForm = document.getElementById('order-form');
+    if(orderForm) {
+        orderForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Thu thập dữ liệu form
+            const formData = new FormData(orderForm);
+            // Gửi dữ liệu đơn hàng lên server (chỉnh sửa URL theo backend của bạn)
+            fetch(orderForm.action, {
                 method: 'POST',
+                body: formData,
                 headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json'
+                    'X-CSRFToken': '{{ csrf_token }}'
                 }
             })
-            .then(response => response.json())
-            .then(data => updateOrderDisplay(data))
+            .then(response => {
+                if(response.ok) {
+                    return response.json();
+                }
+                throw new Error('Lỗi kết nối.');
+            })
+            .then(data => {
+                if(data.success) {
+                    // Chuyển hướng sang trang hoàn tất đơn hàng hoặc hiển thị thông báo thành công
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert("Có lỗi xảy ra: " + data.error);
+                }
+            })
+            .catch(error => {
+                console.error("Error in order submission:", error);
+                alert("Có lỗi xảy ra. Vui lòng thử lại sau.");
+            });
         });
-    });
-
-    function updateOrderDisplay(data) {
-        // Cập nhật giao diện
-        document.getElementById('cart-total').textContent = data.total;
-        document.getElementById('cart-items').innerHTML = data.items.map(item => `
-            <div class="cart-item">
-                <span>${item.name}</span>
-                <span>${item.quantity} x ${item.price}</span>
-            </div>
-        `).join('');
     }
 });
 </script>
-{% endblock %}
 {% endblock %}

@@ -159,19 +159,38 @@
         <!-- Role-Based Menu -->
         {% if user.is_authenticated %}
             <!-- Sales Staff -->
+    
+
             {% if user.role == 'sales_staff' %}
-            <a class="nav-link" href="{% url 'store:counter-detail' pk=user.assigned_counter.first.id %}">
-                <i class="bi bi-shop me-2"></i>Quầy của tôi
-            </a>
-            <a class="nav-link {% if 'cart' in request.resolver_match.url_name %}active{% endif %}" 
-               href="{% url 'store:cart' %}">
-               <i class="bi bi-cart me-2"></i>Giỏ hàng
-               <span class="badge bg-danger cart-badge">
-                   {% if request.session.cart %}{{ request.session.cart.items|length }}{% else %}0{% endif %}
-               </span>
-            </a>
+            <li class="nav-item">
+                <a class="nav-link {% if 'sales/counter' in request.path %}active{% endif %}" 
+                href="{% url 'store:sales_counter' %}">
+                <i class="bi bi-shop"></i> Quầy của tôi
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'sales/orders/create' in request.path %}active{% endif %}" 
+                href="{% url 'store:sales_order_create' %}">
+                <i class="bi bi-cart-plus"></i> Tạo đơn mới
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'sales/products' in request.path %}active{% endif %}" 
+                href="{% url 'store:sales_products' %}">
+                <i class="bi bi-box-seam"></i> Quản lý kho
+                </a>
+            </li>
             {% endif %}
 
+            {% if user.role == 'sales_staff' %}
+            <li class="nav-item">
+                <a class="nav-link {% if 'sales/customers' in request.path %}active{% endif %}" 
+                   href="{% url 'store:sales-customer-list' %}">
+                   <i class="bi bi-people me-2"></i>Danh Sách Khách Hàng
+                </a>
+            </li>
+            {% endif %}
+            
             <!-- Store Manager -->
             {% if user.role == 'store_manager' %}
             <a class="nav-link" href="{% url 'store:manage-counters' %}">

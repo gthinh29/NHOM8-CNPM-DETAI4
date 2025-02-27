@@ -11,6 +11,7 @@ class Role(models.TextChoices):
     SALES_STAFF = 'sales_staff', 'Sales Staff'
     CUSTOMER = 'customer', 'Khách hàng'
 
+
 class CustomUser(AbstractUser):
     phone = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(
@@ -72,20 +73,45 @@ class Customer(models.Model):
         return f"{self.user.username} - {self.get_customer_status()}"
 
 from django.db import models
-from django.template.defaultfilters import slugify
+from django.utils.text import slugify
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Tên danh mục")
+    slug = models.SlugField(max_length=150, unique=True, blank=True)
+    description = models.TextField(blank=True, null=True, verbose_name="Mô tả")
+
+    class Meta:
+        verbose_name = "Danh mục"
+        verbose_name_plural = "Danh mục sản phẩm"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def get_products(self):
+        """Lấy danh sách sản phẩm thuộc danh mục này."""
+        return self.products.all()
+
+    def __str__(self):
+        return self.name
+
 
 class Product(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, verbose_name="Tên sản phẩm")
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-    price = models.FloatField(default=0.0)
-    stock = models.PositiveIntegerField(default=0)
-    description = models.TextField(blank=True, null=True)  # Thêm trường mô tả
-    orders = models.ManyToManyField(
-        'Order',  
-        through='OrderItem',
-        blank=True,
-        related_name='products_orders'
+    price = models.DecimalField(max_digits=12, decimal_places=2, default=0.0, verbose_name="Giá")
+    stock = models.PositiveIntegerField(default=0, verbose_name="Số lượng tồn kho")
+    description = models.TextField(blank=True, null=True, verbose_name="Mô tả")
+    category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, null=True, blank=True, related_name="products", verbose_name="Danh mục"
     )
+
+    class Meta:
+        verbose_name = "Sản phẩm"
+        verbose_name_plural = "Danh sách sản phẩm"
+        ordering = ['name']
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -99,33 +125,40 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
     def update_stock(self, quantity: int) -> bool:
+        """Cập nhật số lượng tồn kho."""
         if quantity < 0 and self.stock < abs(quantity):
-            return False
+            return False  # Không đủ hàng
         self.stock += quantity
         self.save()
         return True
 
     def set_price(self, new_price: float):
-        self.price = new_price
-        self.save()
+        """Cập nhật giá sản phẩm."""
+        if new_price >= 0:
+            self.price = new_price
+            self.save()
 
     def apply_discount(self, discount_percentage: float):
+        """Áp dụng giảm giá theo phần trăm."""
         if 0 <= discount_percentage <= 100:
             discount_amount = self.price * (discount_percentage / 100)
             self.price -= discount_amount
             self.save()
 
     def is_available(self) -> bool:
+        """Kiểm tra sản phẩm có còn hàng không."""
         return self.stock > 0
 
     def is_low_stock(self, threshold: int = 5) -> bool:
+        """Kiểm tra sản phẩm có sắp hết hàng không."""
         return self.stock < threshold
 
     def get_details(self) -> str:
-        return f"Product: {self.name}, Price: ${self.price:.2f}, Stock: {self.stock}"
+        """Lấy thông tin sản phẩm."""
+        return f"Product: {self.name}, Price: {self.price:,.0f} VNĐ, Stock: {self.stock}"
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.category.name if self.category else 'Chưa có danh mục'})"
 
 class StoreCounter(models.Model):
     location = models.CharField(max_length=100)
@@ -161,6 +194,7 @@ class StoreCounter(models.Model):
     def __str__(self):
         return f"Counter: {self.location}"
 
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -169,36 +203,101 @@ class Order(models.Model):
         ('refunded', 'Refunded')
     ]
 
-    date = models.DateField(default=timezone.now)
-    order_status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pending')
+    PAYMENT_METHODS = [
+        ('cash', 'Tiền mặt'),
+        ('credit_card', 'Thẻ tín dụng'),
+        ('bank_transfer', 'Chuyển khoản'),
+    ]
+
+    # Thông tin cơ bản
+    date = models.DateTimeField(default=timezone.now, verbose_name="Ngày tạo đơn")
+    order_status = models.CharField(
+        max_length=50, 
+        choices=STATUS_CHOICES, 
+        default='pending',
+        verbose_name="Trạng thái đơn hàng"
+    )
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHODS,
+        blank=True,
+        null=True,
+        verbose_name="Phương thức thanh toán"
+    )
+    total_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0.0,
+        verbose_name="Tổng tiền"
+    )
+
+    # Liên kết với các model khác
     counter = models.ForeignKey(
-        StoreCounter,
+        'StoreCounter',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='order_products'
+        related_name='orders',
+        verbose_name="Quầy"
     )
-    total_amount = models.FloatField(default=0.0)
     created_by = models.ForeignKey(
-        CustomUser,
+        'CustomUser',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='order_products'
+        related_name='created_orders',
+        verbose_name="Người tạo đơn"
     )
-    customer_name = models.CharField(max_length=255, blank=True, null=True)
-    customer_phone = models.CharField(max_length=20, blank=True, null=True)
-    customer_address = models.TextField(blank=True, null=True)
     customer = models.ForeignKey(
-        Customer,
+        'Customer',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='orders'
+        related_name='orders',
+        verbose_name="Khách hàng"
     )
-    products = models.ManyToManyField(Product, through='OrderItem', blank=True, related_name='order_products')
+    products = models.ManyToManyField(
+        'Product',
+        through='OrderItem',
+        related_name='ordered_in',  # ✅ Đổi tên tránh xung đột
+        verbose_name="Sản phẩm"
+    )
+
+    # Thông tin khách hàng (dành cho khách vãng lai)
+    customer_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Tên khách hàng"
+    )
+    customer_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name="Số điện thoại"
+    )
+    customer_address = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Địa chỉ"
+    )
+
+    class Meta:
+        verbose_name = "Đơn hàng"
+        verbose_name_plural = "Đơn hàng"
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"Đơn hàng #{self.pk} - {self.get_order_status_display()}"
+
+    def clean(self):
+        if not self.customer and not (self.customer_name and self.customer_phone):
+            raise ValidationError("Vui lòng cung cấp thông tin khách hàng hoặc chọn khách hàng từ hệ thống.")
 
     def add_item(self, product, quantity):
+        if quantity <= 0:
+            raise ValidationError("Số lượng phải lớn hơn 0.")
+        
         if product.update_stock(-quantity):
             item, created = OrderItem.objects.get_or_create(
                 order=self, 
@@ -218,40 +317,62 @@ class Order(models.Model):
         self.save()
         return total
 
-    def process_payment(self):
-        if self.order_status == 'pending':
-            self.order_status = 'paid'
-            self.save()
-            return True
-        return False
+    def process_payment(self, payment_method, amount_received):
+        if self.order_status != 'pending':
+            raise ValidationError("Chỉ có thể thanh toán đơn hàng đang ở trạng thái chờ.")
+        
+        if amount_received < self.total_amount:
+            raise ValidationError("Số tiền nhận không đủ để thanh toán.")
+        
+        self.order_status = 'paid'
+        self.payment_method = payment_method
+        self.save()
+        return True
 
     def cancel_order(self):
-        if self.order_status == 'pending':
-            self.order_status = 'canceled'
-            for item in self.order_items.all():
-                item.product.update_stock(item.quantity)
-            self.save()
-            return True
-        return False
+        if self.order_status != 'pending':
+            raise ValidationError("Chỉ có thể hủy đơn hàng đang ở trạng thái chờ.")
+        
+        self.order_status = 'canceled'
+        for item in self.order_items.all():
+            item.product.update_stock(item.quantity)
+        self.save()
+        return True
 
     def refund(self):
-        if self.order_status == 'paid':
-            self.order_status = 'refunded'
-            for item in self.order_items.all():
-                item.product.update_stock(item.quantity)
-            self.save()
-            return True
-        return False
+        if self.order_status != 'paid':
+            raise ValidationError("Chỉ có thể hoàn trả đơn hàng đã thanh toán.")
+        
+        self.order_status = 'refunded'
+        for item in self.order_items.all():
+            item.product.update_stock(item.quantity)
+        self.save()
+        return True
 
     def generate_invoice(self):
         items = "\n".join(
-            [f"{item.product.name} x {item.quantity} - ${item.product.price * item.quantity:.2f}"
+            [f"{item.product.name} x {item.quantity} - {item.product.price * item.quantity:,.0f} VNĐ"
              for item in self.order_items.all()]
         )
-        return f"Invoice for Order #{self.pk}:\n{items}\nTotal: ${self.total_amount:.2f}"
+        return (
+            f"HÓA ĐƠN #{self.pk}\n"
+            f"Ngày: {self.date.strftime('%d/%m/%Y %H:%M')}\n"
+            f"Khách hàng: {self.customer_name or self.customer.user.get_full_name()}\n"
+            f"SĐT: {self.customer_phone or self.customer.user.phone}\n"
+            f"Phương thức thanh toán: {self.get_payment_method_display()}\n\n"
+            f"Chi tiết đơn hàng:\n{items}\n\n"
+            f"Tổng cộng: {self.total_amount:,.0f} VNĐ"
+        )
 
-    def __str__(self):
-        return f"Order #{self.pk} - {self.order_status}"
+    def get_status_color(self):
+        status_colors = {
+            'pending': 'warning',
+            'paid': 'success',
+            'canceled': 'danger',
+            'refunded': 'secondary'
+        }
+        return status_colors.get(self.order_status, 'primary')
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')

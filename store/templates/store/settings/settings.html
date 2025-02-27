@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'store/base.html' %}
 {% block title %}Settings - Jewelry Sales Manager{% endblock %}
 {% block content %}
 <div class="container my-5">
@@ -42,7 +42,7 @@
             </form>
         </div>
     </div>
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">
+    <a href="{% url 'store:dashboard' %}" class="btn btn-secondary mt-3">
         <i class="bi bi-arrow-left"></i> Back to Dashboard
     </a>
 </div>

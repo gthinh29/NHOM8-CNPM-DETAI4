@@ -4,10 +4,10 @@
 <div class="container my-5">
     <h1 class="mb-4 text-center">Danh sách Quầy hàng</h1>
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <a href="{% url 'counter_create' %}" class="btn btn-primary">
+        <a href="{% url 'store:counter_create' %}" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> Thêm Quầy hàng
         </a>
-        <form class="d-flex" method="GET" action="{% url 'counter_list' %}">
+        <form class="d-flex" method="GET" action="{% url 'store:counter-list' %}">
             <input type="text" name="search" class="form-control me-2" placeholder="Tìm kiếm quầy hàng..." value="{{ request.GET.search }}">
             <button type="submit" class="btn btn-outline-secondary">
                 <i class="bi bi-search"></i>
@@ -29,13 +29,13 @@
                         <strong>Số đơn hàng:</strong> {{ counter.orders.count }}
                     </p>
                     <div class="d-flex justify-content-between">
-                        <a href="{% url 'counter_detail' counter.id %}" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'store:counter-detail' counter.id %}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye"></i> Chi tiết
                         </a>
-                        <a href="{% url 'counter_update' counter.id %}" class="btn btn-sm btn-outline-warning">
+                        <a href="{% url 'store:counter-update' counter.id %}" class="btn btn-sm btn-outline-warning">
                             <i class="bi bi-pencil"></i> Sửa
                         </a>
-                        <a href="{% url 'counter_delete' counter.id %}" class="btn btn-sm btn-outline-danger">
+                        <a href="{% url 'store:counter-delete' counter.id %}" class="btn btn-sm btn-outline-danger">
                             <i class="bi bi-trash"></i> Xóa
                         </a>
                     </div>

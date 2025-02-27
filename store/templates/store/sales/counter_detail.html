@@ -1,0 +1,80 @@
+{% extends "store/base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-shop me-2"></i>
+                        Quản lý quầy {{ counter.location }}
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Thống kê nhanh -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <h5 class="text-success">{{ today_orders.count }}</h5>
+                                    <small>Đơn hôm nay</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-danger">
+                                <div class="card-body text-center">
+                                    <h5 class="text-danger">{{ low_stock_products.count }}</h5>
+                                    <small>Sản phẩm sắp hết</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nút hành động -->
+                    <div class="d-grid gap-2 d-md-flex mb-4">
+                        <a href="{% url 'store:sales_order_create' %}" 
+                           class="btn btn-success btn-lg">
+                           <i class="bi bi-cart-plus me-2"></i>Tạo đơn mới
+                        </a>
+                        <a href="{% url 'store:sales_products' %}" 
+                           class="btn btn-info btn-lg">
+                           <i class="bi bi-search me-2"></i>Kiểm kho
+                        </a>
+                    </div>
+
+                    <!-- Danh sách đơn hàng chờ xử lý -->
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h5><i class="bi bi-hourglass-split me-2"></i>Đơn hàng chờ thanh toán</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if pending_orders %}
+                            <div class="list-group">
+                                {% for order in pending_orders %}
+                                <a href="{% url 'store:sales_order_detail' order.pk %}" 
+                                   class="list-group-item list-group-item-action">
+                                   <div class="d-flex justify-content-between">
+                                       <div>
+                                           <strong>#{{ order.id }}</strong> - 
+                                           {{ order.customer_name|default:"Khách vãng lai" }}
+                                       </div>
+                                       <span class="text-danger">{{ order.total_amount|intcomma }}₫</span>
+                                   </div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-muted">Không có đơn hàng nào chờ xử lý</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

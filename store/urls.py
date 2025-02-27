@@ -69,7 +69,14 @@ urlpatterns = [
     # Sales Interface
     path("sales/", include([
         path("dashboard/", views.SalesDashboard.as_view(), name="sales-dashboard"),
-        
+        path('counter/', views.SalesCounterView.as_view(), name='sales_counter'),
+        path('counter/create/', views.CounterCreateView.as_view(), name='counter_create'),
+        path('orders/create/', views.SalesOrderCreateView.as_view(), name='sales_order_create'),
+        path('orders/<int:pk>/payment/', views.process_payment, name='sales_order_payment'),
+        path('orders/<int:pk>/', views.SalesOrderDetailView.as_view(), name='sales_order_detail'),
+        path('sales/products/', views.sales_products, name='sales_products'),
+        path('sales/customers/', views.SalesCustomerListView.as_view(), name='sales-customer-list'),
+        path('sales/customers/create/', views.SalesCustomerCreateView.as_view(), name='sales-customer-create'),
         # Sales Orders
         path("orders/", include([
             path("", views.SalesOrderListView.as_view(), name="sales-order-list"),
@@ -112,3 +119,27 @@ urlpatterns = [
         path("remove/<int:product_id>/", views.remove_from_cart, name="remove-from-cart"),
     ])),
 ]
+
+path("counters/", include([
+    path("", views.CounterListView.as_view(), name="counter-list"),
+    path("new/", views.CounterCreateView.as_view(), name="counter-create"),
+    path("manage/", views.manage_counters, name="manage-counters"),
+    path("<int:pk>/", include([
+        path("", views.CounterDetailView.as_view(), name="counter-detail"),
+        path("edit/", views.CounterUpdateView.as_view(), name="counter-update"),
+        path("delete/", views.CounterDeleteView.as_view(), name="counter-delete"),
+        path("orders/new/", views.CounterCreateView.as_view(), name="counter-order-create"),
+    ])),
+])),
+
+# Product Management
+path("products/", include([
+    path("", views.ProductListView.as_view(), name="product_list"),
+    path("add/", views.ProductCreateView.as_view(), name="add_product"),
+    path("<slug:slug>/", include([
+        path("", views.ProductDetailView.as_view(), name="product-detail"),
+        path("edit/", views.ProductUpdateView.as_view(), name="product-update"),
+        path("delete/", views.ProductDeleteView.as_view(), name="product-delete"),
+    ])),
+    path("detail/<int:pk>/", views.ProductDetailByPkView.as_view(), name="product-detail-pk"),
+])),

@@ -1,17 +1,30 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth import get_user_model
-from .models import CustomUser, SystemSetting, StoreCounter, Product, Role, Order, OrderItem
+from .models import CustomUser, Customer, SystemSetting, StoreCounter, Product, Role, Order, OrderItem
 
 # Form tạo người dùng mới
-class CustomUserCreationForm(UserCreationForm):
+class CustomerCreateForm(forms.ModelForm):
     class Meta:
-        model = CustomUser
-        fields = ('username', 'email', 'phone', 'role')
-    
+        model = Customer
+        fields = ['user', 'address', 'loyalty_points']
+        widgets = {
+            'user': forms.HiddenInput(),  # Ẩn trường user vì sẽ tự động gán
+            'address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Nhập địa chỉ khách hàng'
+            }),
+            'loyalty_points': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'placeholder': 'Nhập điểm tích lũy'
+            }),
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['role'].widget = forms.Select(choices=CustomUser.Role.choices)
+        self.fields['loyalty_points'].initial = 0  # Mặc định điểm tích lũy là 0
 
 # Form chỉnh sửa người dùng
 class CustomUserChangeForm(UserChangeForm):
@@ -112,14 +125,29 @@ class ProductForm(forms.ModelForm):
         }
 
 class OrderForm(forms.ModelForm):
+    products = forms.ModelMultipleChoiceField(
+        queryset=Product.objects.none(),  # Mặc định rỗng, sẽ cập nhật sau
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        label="Chọn sản phẩm"
+    )
+
     class Meta:
         model = Order
-        fields = ['customer_name', 'customer_phone', 'customer_address']
+        fields = ['customer_name', 'customer_phone', 'customer_address', 'products']
         widgets = {
             'customer_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter customer name'}),
             'customer_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'}),
             'customer_address': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter address', 'rows': 2}),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Nhận user từ view
+        super().__init__(*args, **kwargs)
+        
+        if user and user.assigned_counter.exists():
+            self.fields['products'].queryset = user.assigned_counter.first().products.all()
+
 
 class OrderItemForm(forms.ModelForm):
     class Meta:
@@ -132,3 +160,73 @@ class OrderItemForm(forms.ModelForm):
             }),
             'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
         }
+
+from django import forms
+from django.core.validators import MinValueValidator
+from .models import Order
+
+class PaymentForm(forms.Form):
+    PAYMENT_METHODS = [
+        ('cash', 'Tiền mặt'),
+        ('credit_card', 'Thẻ tín dụng'),
+        ('bank_transfer', 'Chuyển khoản'),
+    ]
+
+    payment_method = forms.ChoiceField(
+        choices=PAYMENT_METHODS,
+        label="Phương thức thanh toán",
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'aria-label': 'Chọn phương thức thanh toán'
+        }),
+        initial='cash'  # Mặc định là tiền mặt
+    )
+
+    amount = forms.DecimalField(
+        label="Số tiền nhận",
+        max_digits=12,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': '1000',
+            'placeholder': 'Nhập số tiền khách đưa',
+            'aria-label': 'Số tiền nhận'
+        }),
+        validators=[MinValueValidator(0)]
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.order_total = kwargs.pop('order_total', None)
+        super().__init__(*args, **kwargs)
+
+        # Thiết lập giá trị tối thiểu cho trường amount
+        if self.order_total:
+            self.fields['amount'].widget.attrs['min'] = str(self.order_total)
+            self.fields['amount'].help_text = f"Số tiền tối thiểu: {self.order_total:,.0f} VNĐ"
+
+    def clean_amount(self):
+        """
+        Kiểm tra số tiền nhận có đủ để thanh toán hay không
+        """
+        amount = self.cleaned_data.get('amount')
+        if self.order_total and amount < self.order_total:
+            raise forms.ValidationError(
+                f"Số tiền nhận không đủ. Cần ít nhất {self.order_total:,.0f} VNĐ."
+            )
+        return amount
+
+    def clean(self):
+        """
+        Kiểm tra tổng thể form
+        """
+        cleaned_data = super().clean()
+        payment_method = cleaned_data.get('payment_method')
+        amount = cleaned_data.get('amount')
+
+        # Kiểm tra nếu phương thức thanh toán là thẻ tín dụng hoặc chuyển khoản
+        if payment_method in ['credit_card', 'bank_transfer'] and not amount:
+            raise forms.ValidationError(
+                "Vui lòng nhập số tiền khi thanh toán bằng thẻ tín dụng hoặc chuyển khoản."
+            )
+
+        return cleaned_data

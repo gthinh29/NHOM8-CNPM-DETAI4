@@ -5,6 +5,6 @@
 <form method="post">
     {% csrf_token %}
     <button type="submit" class="btn btn-danger">Xóa</button>
-    <a href="{% url 'counter_list' %}" class="btn btn-secondary">Hủy</a>
+    <a href="{% url 'store:counter-list' %}" class="btn btn-secondary">Hủy</a>
 </form>
 {% endblock %}

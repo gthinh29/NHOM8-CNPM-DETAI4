@@ -19,8 +19,8 @@ from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-from .forms import (CounterForm, CustomUserChangeForm, CustomUserCreationForm,
-                    OrderForm, OrderItemForm, ProductForm, SystemSettingForm)
+from .forms import (CounterForm, CustomUserChangeForm, CustomerCreateForm,
+                    OrderForm, OrderItemForm, PaymentForm, ProductForm, SystemSettingForm)
 from .mixins import (AccountantRequiredMixin, AdminRequiredMixin,
                      ManagerRequiredMixin, SalesStaffRequiredMixin)
 from .models import (CustomUser, Debts, Order, OrderItem, Product, Role,
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 # Authentication Views
 def register(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = CustomerCreateForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
@@ -40,7 +40,7 @@ def register(request):
             logger.info(f"New user registered: {user.username}")
             return redirect('store:dashboard')
         return render(request, 'store/auth/register.html', {'form': form})
-    return render(request, 'store/auth/register.html', {'form': CustomUserCreationForm()})
+    return render(request, 'store/auth/register.html', {'form': CustomerCreateForm()})
 
 def user_login(request):
     if request.method == 'POST':
@@ -89,7 +89,9 @@ class ProductDetailView(LoginRequiredMixin, DetailView):
     slug_field = 'slug'
     slug_url_kwarg = 'slug'
 
-class ProductCreateView(AdminRequiredMixin, CreateView):
+from .mixins import AdminOrManagerRequiredMixin
+
+class ProductCreateView(AdminOrManagerRequiredMixin, CreateView):
     model = Product
     form_class = ProductForm
     template_name = 'store/products/add_product.html'
@@ -103,7 +105,7 @@ class ProductCreateView(AdminRequiredMixin, CreateView):
         logger.info(f"Product added by {self.request.user.username}")
         return super().form_valid(form)
 
-class ProductUpdateView(AdminRequiredMixin, UpdateView):
+class ProductUpdateView(AdminOrManagerRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'store/products/update_product.html'
@@ -119,7 +121,7 @@ class ProductUpdateView(AdminRequiredMixin, UpdateView):
         logger.info(f"Product {self.object.id} updated by {self.request.user.username}")
         return super().form_valid(form)
 
-class ProductDeleteView(AdminRequiredMixin, DeleteView):
+class ProductDeleteView(AdminOrManagerRequiredMixin, DeleteView):
     model = Product
     template_name = 'store/products/product_confirm_delete.html'
     success_url = reverse_lazy('store:product_list')
@@ -451,26 +453,151 @@ class SalesDashboard(LoginRequiredMixin, TemplateView):
         context.update({
             'pending_orders': Order.objects.filter(
                 counter=self.request.user.assigned_counter,
-                status='pending'
+                order_status='pending'
             ).count(),
             'today_sales': Order.objects.today_sales(
                 counter=self.request.user.assigned_counter
             )
         })
         return context
-    
-from django.views.generic import ListView
-from .models import Customer  # Đảm bảo đã import model Customer
 
-class SalesCustomerListView(LoginRequiredMixin, ListView):
+from django.shortcuts import render, get_object_or_404
+from django.core.paginator import Paginator
+from store.models import Product, Category
+
+def sales_products(request):
+    """Hiển thị danh sách sản phẩm với tìm kiếm, lọc danh mục và phân trang."""
+    
+    # Lấy danh sách danh mục sản phẩm
+    categories = Category.objects.all()
+
+    # Lấy danh sách sản phẩm, có thể tìm kiếm hoặc lọc theo danh mục
+    products = Product.objects.all()
+
+    # Lọc theo danh mục nếu có yêu cầu
+    category_id = request.GET.get('category', '')
+    if category_id:
+        products = products.filter(category_id=category_id)
+
+    # Tìm kiếm theo tên sản phẩm
+    search_query = request.GET.get('search', '')
+    if search_query:
+        products = products.filter(name__icontains=search_query)
+
+    # Phân trang (10 sản phẩm/trang)
+    paginator = Paginator(products, 10)  
+    page_number = request.GET.get('page')
+    products_page = paginator.get_page(page_number)
+
+    # Trả dữ liệu về template
+    return render(request, 'store/sales/sales_products.html', {
+        'products': products_page,
+        'categories': categories,
+        'search_query': search_query,
+        'selected_category': category_id,
+    })
+
+
+@login_required
+def process_payment(request, pk):
+    order = get_object_or_404(Order, pk=pk, created_by=request.user)
+    
+    if request.method == 'POST':
+        form = PaymentForm(request.POST, order_total=order.total_amount)
+        if form.is_valid():
+            payment_method = form.cleaned_data['payment_method']
+            amount_received = form.cleaned_data['amount']
+            
+            # Kiểm tra số tiền nhận
+            if amount_received >= order.total_amount:
+                order.status = 'paid'
+                order.payment_method = payment_method
+                order.save()
+                
+                # Cập nhật tồn kho
+                for item in order.order_items.all():
+                    item.product.update_stock(-item.quantity)
+                
+                messages.success(request, "Thanh toán thành công!")
+                return redirect('store:sales_invoice', pk=order.pk)
+            else:
+                messages.error(request, "Số tiền nhận không đủ để thanh toán.")
+    else:
+        form = PaymentForm(order_total=order.total_amount)
+    
+    return render(request, 'store/sales/payment.html', {
+        'order': order,
+        'form': form
+    })
+
+class SalesInventoryView(SalesStaffRequiredMixin, ListView):
+    template_name = 'store/sales/inventory.html'
+    context_object_name = 'products'
+
+    def get_queryset(self):
+        return self.request.user.assigned_counter.first().products.annotate(
+            total_value=F('price') * F('stock')
+        ).order_by('-stock')
+
+class SalesCounterView(SalesStaffRequiredMixin, DetailView):
+    model = StoreCounter
+    template_name = 'store/sales/counter_detail.html'
+    context_object_name = 'counter'
+
+    def get_object(self):
+        return self.request.user.assigned_counter.first()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        counter = self.object
+        context.update({
+            'today_orders': Order.objects.filter(counter=counter, date__date=timezone.now().date()),
+            'low_stock_products': counter.products.filter(stock__lt=5),
+            'pending_orders': Order.objects.filter(counter=counter, order_status='pending')
+        })
+        return context
+
+
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView
+from .models import Customer, CustomUser
+
+class SalesCustomerCreateView(CreateView):
+    model = Customer
+    fields = ['user', 'address', 'loyalty_points']
+    template_name = "store/sales/customers/create.html"
+    success_url = reverse_lazy('store:sales-customer-list')
+
+class SalesCustomerListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     template_name = 'store/sales/customer_list.html'
     context_object_name = 'customers'
-    
+    paginate_by = 10  # Phân trang, hiển thị 10 khách hàng mỗi trang
+
+    def test_func(self):
+        # Chỉ cho phép nhân viên bán hàng truy cập
+        return self.request.user.role == 'sales_staff'
+
     def get_queryset(self):
-        # Lấy danh sách khách hàng liên quan đến quầy của nhân viên
+        """
+        Lấy danh sách khách hàng liên quan đến quầy của nhân viên
+        """
+        # Lấy quầy được gán cho nhân viên
+        counter = self.request.user.assigned_counter.first()
+        
+        # Lọc khách hàng có đơn hàng tại quầy này
         return Customer.objects.filter(
-            user__assigned_counter=self.request.user.assigned_counter
-        )
+            orders__counter=counter
+        ).distinct().order_by('-user__date_joined')
+
+    def get_context_data(self, **kwargs):
+        """
+        Thêm dữ liệu bổ sung vào context
+        """
+        context = super().get_context_data(**kwargs)
+        context['counter'] = self.request.user.assigned_counter.first()
+        return context
+        
+
 class SalesProductListView(LoginRequiredMixin, ListView):
     template_name = 'store/sales/product_list.html'
     context_object_name = 'products'
@@ -500,16 +627,35 @@ from django.urls import reverse_lazy
 from .models import Order
 from .forms import OrderForm
 
-class SalesOrderCreateView(LoginRequiredMixin, CreateView):
+class SalesOrderCreateView(SalesStaffRequiredMixin, CreateView):
     model = Order
     form_class = OrderForm
     template_name = 'store/sales/order_create.html'
-    success_url = reverse_lazy('store:sales-main-order-list')
+    
+    def get_initial(self):
+        return {
+            'counter': self.request.user.assigned_counter.first(),
+            'created_by': self.request.user
+        }
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['products'].queryset = self.request.user.assigned_counter.first().products.all()
+        return form
 
     def form_valid(self, form):
-        """Tự động gán người tạo đơn hàng"""
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        order = form.save(commit=False)
+        order.counter = self.request.user.assigned_counter.first()
+        order.created_by = self.request.user
+        order.save()
+        
+        # Xử lý các sản phẩm trong đơn hàng
+        for product in form.cleaned_data['products']:
+            quantity = form.cleaned_data[f'quantity_{product.id}']
+            if product.update_stock(-quantity):
+                OrderItem.objects.create(order=order, product=product, quantity=quantity)
+        
+        return redirect('store:sales_order_detail', pk=order.pk)
     
 class SalesOrderDetailView(LoginRequiredMixin, DetailView):
     model = Order

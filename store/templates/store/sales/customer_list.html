@@ -1,31 +1,90 @@
 {% extends "store/base.html" %}
+{% load humanize %}
 
 {% block content %}
-  <h1>Customer List</h1>
-  <table border="1" cellspacing="0" cellpadding="5">
-    <thead>
-      <tr>
-        <th>Username</th>
-        <th>Full Name</th>
-        <th>Email</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for customer in customers %}
-        <tr>
-          <td>{{ customer.username }}</td>
-          <td>{{ customer.get_full_name }}</td>
-          <td>{{ customer.email }}</td>
-          <td>
-            <a href="{% url 'store:client-detail' customer.username %}">View Details</a>
-          </td>
-        </tr>
-      {% empty %}
-        <tr>
-          <td colspan="4">No customers found.</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="container-fluid">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                <i class="bi bi-people me-2"></i>Danh Sách Khách Hàng
+            </h4>
+        </div>
+        <div class="card-body">
+            <!-- Nút tạo khách hàng mới -->
+            <div class="mb-4">
+                <a href="{% url 'store:sales-customer-create' %}" class="btn btn-success">
+                    <i class="bi bi-person-plus me-2"></i>Tạo Khách Hàng Mới
+                </a>
+            </div>
+
+            <!-- Bảng danh sách khách hàng -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Tên Khách Hàng</th>
+                            <th>Số Điện Thoại</th>
+                            <th>Địa Chỉ</th>
+                            <th>Điểm Tích Lũy</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ customer.user.get_full_name|default:customer.user.username }}</td>
+                            <td>{{ customer.user.phone|default:"-" }}</td>
+                            <td>{{ customer.address|truncatechars:30|default:"-" }}</td>
+                            <td>{{ customer.loyalty_points|intcomma }}</td>
+                            <td>
+                                <a href="{% url 'store:sales-customer-detail' customer.pk %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                   <i class="bi bi-eye me-1"></i>Xem Chi Tiết
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Không có khách hàng nào</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân trang -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Trước</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Sau</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}

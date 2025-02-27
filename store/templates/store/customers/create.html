@@ -1,0 +1,13 @@
+{% extends 'sote/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Thêm Khách Hàng Mới</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Lưu</button>
+    </form>
+    <a href="{% url 'customer_list' %}" class="btn btn-secondary">Quay lại</a>
+</div>
+{% endblock %}

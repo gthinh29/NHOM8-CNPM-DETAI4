@@ -1,3 +1,4 @@
+{% load humanize %}
 <div class="card shadow-sm">
     <div class="card-header bg-white">
         <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Thông tin đơn hàng</h5>
@@ -6,7 +7,7 @@
         <form method="post" id="order-form">
             {% csrf_token %}
             
-            <!-- Customer Info -->
+            <!-- Thông tin khách hàng -->
             <div class="mb-4">
                 <div class="alert alert-info d-flex align-items-center">
                     <i class="bi bi-info-circle me-2"></i>
@@ -23,19 +24,39 @@
                 </div>
             </div>
 
-            <!-- Selected Products -->
+            <!-- Danh sách sản phẩm đã chọn -->
             <div class="mb-4">
                 <h6>Sản phẩm đã chọn</h6>
-                <div id="cart-items" class="mb-3">
-                    <!-- Dynamic content -->
+                <div id="selected-products" class="mb-3">
+                    {% if selected_products %}
+                        <ul class="list-group">
+                            {% for product in selected_products %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>{{ product.name }}</span>
+                                    <span>{{ product.quantity }} x {{ product.price|intcomma }}₫</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Chưa có sản phẩm nào được chọn.</p>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Payment Section -->
+            <!-- Phần thanh toán -->
             <div class="bg-light p-3 rounded">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <h5 class="mb-0">Tổng tiền: <span id="cart-total">0</span>₫</h5>
+                        <h5 class="mb-0">
+                            Tổng tiền: 
+                            <span id="order-total">
+                                {% if order_total %}
+                                    {{ order_total|intcomma }}₫
+                                {% else %}
+                                    0₫
+                                {% endif %}
+                            </span>
+                        </h5>
                     </div>
                     <div class="col-md-6 text-end">
                         <button type="submit" class="btn btn-success btn-lg">

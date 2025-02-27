@@ -1,0 +1,34 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Tạo Khách Hàng{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm p-4">
+        <h2 class="mb-4">Tạo Khách Hàng Mới</h2>
+        
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="id_address" class="form-label">Địa chỉ</label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                    <div class="text-danger">{{ form.address.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="id_loyalty_points" class="form-label">Điểm Tích Lũy</label>
+                {{ form.loyalty_points }}
+                {% if form.loyalty_points.errors %}
+                    <div class="text-danger">{{ form.loyalty_points.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Lưu Khách Hàng</button>
+            <a href="{% url 'customer_list' %}" class="btn btn-secondary">Hủy</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

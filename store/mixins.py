@@ -3,6 +3,8 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import redirect
 
+from store.models import Role
+
 class RoleRequiredMixin(UserPassesTestMixin):
     role = None
     permission_denied_message = "Bạn không có quyền truy cập trang này"
@@ -31,3 +33,7 @@ class SalesStaffRequiredMixin(UserPassesTestMixin):
     
     def handle_no_permission(self):
         return redirect('login')
+
+class AdminOrManagerRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.role in [Role.ADMIN, Role.STORE_MANAGER]

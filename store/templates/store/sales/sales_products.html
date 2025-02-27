@@ -1,0 +1,82 @@
+{% extends 'store/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container">
+    <h2>Quản lý kho sản phẩm</h2>
+
+    <!-- Form Tìm kiếm và Lọc danh mục -->
+    <form method="GET" class="mb-3">
+        <div class="row">
+            <!-- Ô tìm kiếm -->
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Tìm kiếm sản phẩm..." value="{{ search_query }}">
+            </div>
+
+            <!-- Dropdown chọn danh mục -->
+            <div class="col-md-3">
+                <select name="category" class="form-control">
+                    <option value="">-- Tất cả danh mục --</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Bảng danh sách sản phẩm -->
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Tên sản phẩm</th>
+                <th>Giá (VNĐ)</th>
+                <th>Số lượng</th>
+                <th>Danh mục</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ product.name }}</td>
+                <td>{{ product.price|floatformat:"0"|intcomma }}</td>
+                <td>{{ product.quantity }}</td>
+                <td>{{ product.category.name }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">Không có sản phẩm nào.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Phân trang -->
+    <div class="pagination">
+        <span class="step-links">
+            {% if products.has_previous %}
+                <a href="?page=1">&laquo; Trang đầu</a>
+                <a href="?page={{ products.previous_page_number }}">Trang trước</a>
+            {% endif %}
+
+            <span class="current">
+                Trang {{ products.number }} / {{ products.paginator.num_pages }}
+            </span>
+
+            {% if products.has_next %}
+                <a href="?page={{ products.next_page_number }}">Trang sau</a>
+                <a href="?page={{ products.paginator.num_pages }}">Trang cuối &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+</div>
+{% endblock %}
